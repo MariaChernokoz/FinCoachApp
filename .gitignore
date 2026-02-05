@@ -1,0 +1,34 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+*.xcuserstate
+**/.LSOverride
+
+# Android Studio
+.gradle/
+/build/
+*.iml
+.idea/
+local.properties
+.cxx/
+*.keystore
+!debug.keystore
+
+# Node.js (Firebase Functions)
+node_modules/
+lib/
+npm-debug.log
+firebase-debug.log
+.runtimeconfig.json
+
+# Firebase
+.firebase/
+firestore-debug.log
