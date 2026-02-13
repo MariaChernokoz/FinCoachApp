@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F6B484C32F3E2FAF00EAECFC /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = F6B484C22F3E2FAF00EAECFC /* FirebaseFunctions */; };
 		F6CC61DF2F349E8700187354 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = F6CC61DE2F349E8700187354 /* FirebaseAI */; };
 		F6CC61E12F349E8700187354 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F6CC61E02F349E8700187354 /* FirebaseAnalytics */; };
 		F6CC61E32F349E8700187354 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F6CC61E22F349E8700187354 /* FirebaseAuth */; };
@@ -33,6 +34,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F6CC61E12F349E8700187354 /* FirebaseAnalytics in Frameworks */,
+				F6B484C32F3E2FAF00EAECFC /* FirebaseFunctions in Frameworks */,
 				F6CC61E32F349E8700187354 /* FirebaseAuth in Frameworks */,
 				F6CC61E52F349E8700187354 /* FirebaseDatabase in Frameworks */,
 				F6CC61E72F349E8700187354 /* FirebaseFirestore in Frameworks */,
@@ -44,10 +46,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F6B484C12F3E2FAF00EAECFC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F6CC61C42F348C2700187354 = {
 			isa = PBXGroup;
 			children = (
 				F6CC61CF2F348C2700187354 /* FinCoach */,
+				F6B484C12F3E2FAF00EAECFC /* Frameworks */,
 				F6CC61CE2F348C2700187354 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -86,6 +96,7 @@
 				F6CC61E42F349E8700187354 /* FirebaseDatabase */,
 				F6CC61E62F349E8700187354 /* FirebaseFirestore */,
 				F6CC61E82F349E8700187354 /* FirebaseStorage */,
+				F6B484C22F3E2FAF00EAECFC /* FirebaseFunctions */,
 			);
 			productName = FinCoach;
 			productReference = F6CC61CD2F348C2700187354 /* FinCoach.app */;
@@ -369,6 +380,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		F6B484C22F3E2FAF00EAECFC /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F6CC61DD2F349E8700187354 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
 		F6CC61DE2F349E8700187354 /* FirebaseAI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F6CC61DD2F349E8700187354 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
