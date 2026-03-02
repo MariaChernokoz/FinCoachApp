@@ -14,7 +14,7 @@ DerivedData/
 
 # Android Studio
 .gradle/
-/build/
+**/build/
 *.iml
 .idea/
 local.properties
@@ -32,3 +32,11 @@ firebase-debug.log
 # Firebase
 .firebase/
 firestore-debug.log
+
+# Конфиденциальные файлы Google (их лучше не пушить, если репозиторий станет публичным)
+# google-services.json
+# GoogleService-Info.plist
+
+# Локальные переменные окружения (где могут лежать ключи от ИИ)
+.env
+.env.local
