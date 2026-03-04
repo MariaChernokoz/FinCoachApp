@@ -2,11 +2,12 @@ package com.example.fincoach.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Frame Colors (из твоей палитры)
+// Frame Colors (из палитры)
 val White = Color(0xFFFFFFFF)
 val BgLightGray = Color(0xFFEEEEEF) // Фон полей/переключателя
 val DarkGray = Color(0xFF515151)
 val NearBlack = Color(0xFF1F1F1F) // Для темных кнопок
+val BorderGray = Color(0xFFE0E0E0)
 
 // Основные акценты (Зеленый градиент и фиолетовый)
 val BrightGreen = Color(0xFFB5E731) // Gradient Start

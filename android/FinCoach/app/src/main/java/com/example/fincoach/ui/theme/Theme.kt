@@ -33,7 +33,6 @@ fun FinCoachTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    // Используем нашу схему, игнорируя системные динамические цвета
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     // Код для того, чтобы верхняя полоска (Status Bar) тоже была в цвет фона
