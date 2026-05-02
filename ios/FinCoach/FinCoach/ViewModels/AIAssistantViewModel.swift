@@ -20,7 +20,9 @@ class AIAssistantViewModel: ObservableObject {
 
     init() {
         loadChatHistory()
+        #if DEBUG
         functions.useEmulator(withHost: "127.0.0.1", port: 5001)
+        #endif
     }
     
     func sendMessage(_ text: String) {
@@ -31,8 +33,15 @@ class AIAssistantViewModel: ObservableObject {
         let userMessage = ChatMessage(text: text, isUser: true)
         messages.append(userMessage)
         
+        let transactions = TransactionsService.shared.getMockTransactions().map { $0.dictionary }
+        
+        let data: [String: Any] = [
+            "question": text,
+            "transactions": transactions
+        ]
+        
         isLoading = true
-        callAnalyzeFinances(question: text)
+        callAnalyzeFinances(with: data)
     }
     
     func loadExampleQuestion(_ question: String) {
@@ -47,9 +56,7 @@ class AIAssistantViewModel: ObservableObject {
     
     
     // MARK: Cloud Function
-    private func callAnalyzeFinances(question: String) {
-        let data: [String: Any] = ["question": question]
-        
+    private func callAnalyzeFinances(with data: [String: Any]) {
         functions.httpsCallable("analyzeFinances").call(data) { [weak self] result, error in
             guard let self = self else { return }
             
