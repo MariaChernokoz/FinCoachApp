@@ -20,7 +20,9 @@ class AIAssistantViewModel: ObservableObject {
 
     init() {
         loadChatHistory()
+        #if DEBUG
         functions.useEmulator(withHost: "127.0.0.1", port: 5001)
+        #endif
     }
     
     func sendMessage(_ text: String) {

@@ -10,11 +10,10 @@
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const axios = require("axios");
-const qs = require("qs");
 
 setGlobalOptions({ region: "us-central1", maxInstances: 10 });
 
-const AUTH_KEY = "MDE5YzU2NTctNjU5Ni03MGQyLThkNGYtYTRhYzU5MmNmZGI0OmYyYzg4ZGMyLTQyZTEtNDAxNi1hYjdmLTE2YmM4ZDE1Y2UyNw==";
+const AUTH_KEY = process.env.GIGACHAT_AUTH_KEY;
 const MOCK_USER_DATA = { monthlyIncome: 80000, currency: 'RUB' };
 const MOCK_GOALS = [
     { name: 'Отпуск', targetAmount: 200000, currentAmount: 50000 },
@@ -24,7 +23,11 @@ const MOCK_GOALS = [
 // Receive a token (requires updating every 30 minutes)
 async function getGigaToken() {
     try {
-        const data = qs.stringify({ 'scope': 'GIGACHAT_API_PERS' });
+        if (!AUTH_KEY) {
+            throw new Error('GIGACHAT_AUTH_KEY is not configured');
+        }
+
+        const data = new URLSearchParams({ scope: 'GIGACHAT_API_PERS' }).toString();
         const config = {
             method: 'post',
             maxBodyLength: Infinity,
@@ -35,8 +38,7 @@ async function getGigaToken() {
                 'RqUID': '6f0b1293-2713-4fd3-90d5-b04963595678',
                 'Authorization': `Basic ${AUTH_KEY}`
             },
-            data: data,
-            httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false })
+            data: data
         };
 
         const response = await axios.request(config);
@@ -48,6 +50,10 @@ async function getGigaToken() {
 }
 
 exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'Необходимо войти в аккаунт');
+    }
+
     const userTransactions = request.data.transactions || [];
     const userQuestion = request.data.question;
 
@@ -78,8 +84,7 @@ exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
                 model: "GigaChat",
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.7
-            },
-            httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false })
+            }
         };
 
         const response = await axios.request(config);
