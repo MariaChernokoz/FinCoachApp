@@ -48,23 +48,18 @@ async function getGigaToken() {
 }
 
 exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
-    const userTransactions = request.data.transactions || [];
+    console.log('* analyzeFinances called (GigaChat) *');
     const userQuestion = request.data.question;
 
     if (!userQuestion) throw new HttpsError('invalid-argument', 'Вопрос пуст');
 
     try {
         const token = await getGigaToken();
-
-        const prompt = `Ты финансовый коуч. 
-        Вот последние траты пользователя: ${JSON.stringify(userTransactions)}.
-        Вопрос пользователя: "${userQuestion}"
-        Проанализируй эти конкретные траты и ответь кратко.`;
         
-        // const prompt = `Ты финансовый коуч. У пользователя доход ${MOCK_USER_DATA.monthlyIncome} руб. 
-        // Цели: ${JSON.stringify(MOCK_GOALS)}.
-        // Вопрос пользователя: "${userQuestion}"
-        // Ответь на русском языке, кратко, дай 2 совета.`;
+        const prompt = `Ты финансовый коуч. У пользователя доход ${MOCK_USER_DATA.monthlyIncome} руб. 
+        Цели: ${JSON.stringify(MOCK_GOALS)}.
+        Вопрос пользователя: "${userQuestion}"
+        Ответь на русском языке, кратко, дай 2 совета.`;
 
         const config = {
             method: 'post',
