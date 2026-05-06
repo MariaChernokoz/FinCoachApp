@@ -33,7 +33,7 @@ class AIAssistantViewModel: ObservableObject {
         let userMessage = ChatMessage(text: text, isUser: true)
         messages.append(userMessage)
         
-        let transactions = TransactionsService.shared.getMockTransactions().map { $0.dictionary }
+        let transactions = TransactionsMockService.shared.getMockTransactions().map { $0.dictionary }
         
         let data: [String: Any] = [
             "question": text,

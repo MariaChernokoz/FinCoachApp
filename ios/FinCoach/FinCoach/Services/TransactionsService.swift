@@ -2,22 +2,44 @@
 //  TransactionsService.swift
 //  FinCoach
 //
-//  Created by Chernokoz on 16.02.2026.
+//  Created by Chernokoz on 03.05.2026.
 //
 
 import Foundation
+import FirebaseFirestore
 
 final class TransactionsService {
-    static let shared = TransactionsService()
+    private let db = Firestore.firestore()
+    private let collectionName = "transactions"
     
-    func getMockTransactions() -> [Transaction] {
-        return [
-            Transaction(id: "1", title: "Starbucks", amount: 450, category: "Еда", date: Date()),
-            Transaction(id: "2", title: "Такси", amount: 1200, category: "Транспорт", date: Date()),
-            Transaction(id: "3", title: "Продукты", amount: 3500, category: "Еда", date: Date()),
-            Transaction(id: "4", title: "Starbucks", amount: 550, category: "Кофе", date: Date()),
-            Transaction(id: "5", title: "Такси", amount: 1350, category: "Транспорт", date: Date()),
-            Transaction(id: "6", title: "Продукты", amount: 4500, category: "Еда", date: Date())
-        ]
+    func fetchTransactions(userId: String) async throws -> [Transaction] {
+        let snapshot = try await db.collection(collectionName)
+            .whereField("userId", isEqualTo: userId)
+            .getDocuments()
+
+        return Array(
+            snapshot.documents
+                .compactMap { Transaction(id: $0.documentID, data: $0.data()) }
+                .sorted { $0.timestamp > $1.timestamp }
+                .prefix(200)
+        )
+    }
+    
+    func create(_ transaction: Transaction) async throws {
+        try await db.collection(collectionName)
+            .document(transaction.id)
+            .setData(transaction.dictionary)
+    }
+    
+    func update(_ transaction: Transaction) async throws {
+        try await db.collection(collectionName)
+            .document(transaction.id)
+            .setData(transaction.dictionary, merge: true)
+    }
+    
+    func delete(_ transaction: Transaction) async throws {
+        try await db.collection(collectionName)
+            .document(transaction.id)
+            .delete()
     }
 }
