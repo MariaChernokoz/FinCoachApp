@@ -22,7 +22,7 @@ struct TransactionsView: View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 16) {
                         header
                         searchAndFilter
                         balanceCard
@@ -79,50 +79,40 @@ struct TransactionsView: View {
     }
     
     private var header: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack (alignment: .leading) {
             HStack {
-                HStack(spacing: 10) {
-                    AppIcons.logoLightGreen
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 34, height: 34)
-                    
-                    Text("FinCoach")
+                AppIcons.logoLightGreen
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 28, height: 28)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Transactions")
                         .font(.system(size: 26, weight: .bold))
-                    
-                    Text("AI")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(AppColors.lightGreenFrameColor)
+                        .foregroundColor(AppColors.blackTextColor)
                 }
                 
                 Spacer()
                 
                 Circle()
-                    .fill(AppColors.lightGreenFrameColor.opacity(0.14))
-                    .frame(width: 48, height: 48)
+                    .fill(AppColors.lightGreenFrameColor.opacity(0.5))
+                    .frame(width: 36, height: 36)
                     .overlay(
                         Image(systemName: "person")
                             .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(AppColors.whiteFrameColor)
                     )
             }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Transactions")
-                    .font(.system(size: 44, weight: .bold))
-                    .foregroundColor(AppColors.blackTextColor)
-                
-                Text("Track, manage and grow your money")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundColor(AppColors.grayTextColor)
-            }
+            Text("Track, manage and grow your money")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(AppColors.grayTextColor)
         }
     }
     
     private var searchAndFilter: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 10) {
+        HStack(spacing: 8) {
+            HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 20))
+                    .font(.system(size: 16))
                     .foregroundColor(AppColors.grayTextColor)
                 
                 TextField("Search transactions", text: $viewModel.searchText)
@@ -130,13 +120,13 @@ struct TransactionsView: View {
                     .disableAutocorrection(true)
             }
             .padding(.horizontal, 16)
-            .frame(height: 56)
+            .frame(height: 40)
             .background(AppColors.whiteFrameColor)
             .overlay(
                 RoundedRectangle(cornerRadius: 18)
                     .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
             )
-            .cornerRadius(18)
+            .cornerRadius(16)
             
             Menu {
                 Button("Все") {
@@ -154,8 +144,8 @@ struct TransactionsView: View {
                     Text(filterTitle)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(AppColors.darkGreenFrameColor)
-                .frame(height: 56)
+                .foregroundColor(AppColors.lightGreenFrameColor)
+                .frame(height: 40)
                 .padding(.horizontal, 18)
                 .background(AppColors.whiteFrameColor)
                 .overlay(
@@ -167,6 +157,7 @@ struct TransactionsView: View {
         }
     }
     
+    //MARK: Sorting, Filter update to selection window
     private var filterTitle: String {
         switch viewModel.selectedType {
         case .income:
@@ -179,9 +170,9 @@ struct TransactionsView: View {
     }
     
     private var balanceCard: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Total Balance")
                         .font(.system(size: 17, weight: .medium))
                         .foregroundColor(AppColors.grayTextColor)
@@ -195,6 +186,7 @@ struct TransactionsView: View {
                 
                 Spacer()
                 
+                //MARK: ???
                 Text("This Month")
                     .font(.system(size: 14, weight: .medium))
                     .padding(.horizontal, 14)
@@ -368,7 +360,7 @@ private struct TransactionRowView: View {
         HStack(spacing: 16) {
             Circle()
                 .fill(iconColor.opacity(0.2))
-                .frame(width: 58, height: 58)
+                .frame(width: 48, height: 48)
                 .overlay(
                     Image(systemName: iconName)
                         .font(.system(size: 22, weight: .semibold))
