@@ -170,52 +170,42 @@ struct TransactionsView: View {
     }
     
     private var balanceCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Total Balance")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(AppColors.grayTextColor)
-                    
-                    Text(formatAmount(viewModel.balance, showSign: false))
-                        .font(.system(size: 38, weight: .bold))
-                        .foregroundColor(AppColors.blackTextColor)
-                        .minimumScaleFactor(0.7)
-                        .lineLimit(1)
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Total Balance")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(AppColors.grayTextColor)
+                    .padding(.bottom, 12)
                 
                 Spacer()
-                
-                //MARK: ???
-                Text("This Month")
-                    .font(.system(size: 14, weight: .medium))
-                    .padding(.horizontal, 14)
-                    .frame(height: 36)
-                    .background(AppColors.whiteFrameColor.opacity(0.85))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
-                    )
-                    .cornerRadius(18)
+
+                Text(formatAmount(viewModel.balance, showSign: false))
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundColor(AppColors.blackTextColor)
+                    .minimumScaleFactor(0.7)
+                    .lineLimit(1)
             }
-            
-            HStack(spacing: 18) {
-                SummaryMetricView(
-                    title: "Доходы",
-                    amount: viewModel.monthIncome,
-                    color: AppColors.lightGreenFrameColor,
-                    icon: "arrow.down.left"
-                )
-                
-                SummaryMetricView(
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+
+            HStack(spacing: 16) {
+                OverflowMetricCard(
                     title: "Расходы",
                     amount: viewModel.monthExpense,
-                    color: AppColors.purpleFrameColor,
-                    icon: "arrow.up.right"
+                    icon: "arrow.up.right",
+                    color: AppColors.purpleFrameColor
+                )
+                OverflowMetricCard(
+                    title: "Доходы",
+                    amount: viewModel.monthIncome,
+                    icon: "arrow.down.left",
+                    color: AppColors.lightGreenFrameColor
                 )
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 22)
+            .padding(.bottom, 10)
         }
-        .padding(22)
         .background(
             LinearGradient(
                 colors: [
@@ -231,6 +221,7 @@ struct TransactionsView: View {
                 .stroke(AppColors.lightGreenFrameColor.opacity(0.45), lineWidth: 1)
         )
         .cornerRadius(22)
+        .clipped(antialiased: false)
     }
     
     @ViewBuilder
@@ -311,37 +302,49 @@ struct TransactionsView: View {
     }
 }
 
-private struct SummaryMetricView: View {
+private struct OverflowMetricCard: View {
     let title: String
     let amount: Double
-    let color: Color
     let icon: String
-    
+    let color: Color
+
     var body: some View {
-        HStack(spacing: 10) {
-            Circle()
-                .fill(color.opacity(0.16))
-                .frame(width: 34, height: 34)
-                .overlay(
-                    Image(systemName: icon)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(color)
-                )
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(AppColors.grayTextColor)
+        ZStack(alignment: .top) {
+            VStack(spacing: 4) {
+                Spacer().frame(height: 36)
                 Text(currency(amount))
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(AppColors.blackTextColor)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.7)
+                Text(title)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundColor(AppColors.grayTextColor)
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(AppColors.whiteFrameColor)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
+            )
+            .cornerRadius(16)
+            .padding(.top, 30)
+
+            Circle()
+                .fill(color.opacity(0.15))
+                .frame(width: 60, height: 60)
+                .overlay(
+                    Circle().stroke(color.opacity(0.25), lineWidth: 1)
+                )
+                .overlay(
+                    Image(systemName: icon)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(color)
+                )
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
+
     private func currency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
