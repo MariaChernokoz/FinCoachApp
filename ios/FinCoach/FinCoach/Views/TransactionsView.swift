@@ -191,7 +191,7 @@ struct TransactionsView: View {
                 
                 Spacer()
 
-                Text(formatAmount(viewModel.balance, showSign: false))
+                Text(formatAmount(viewModel.filteredBalance, showSign: false))
                     .font(.system(size: 34, weight: .bold))
                     .foregroundColor(AppColors.blackTextColor)
                     .minimumScaleFactor(0.7)
@@ -297,6 +297,7 @@ struct TransactionsView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "RUB"
+        formatter.locale = Locale(identifier: "ru_RU")
         formatter.maximumFractionDigits = 2
         
         if showSign {
@@ -354,6 +355,7 @@ private struct OverflowMetricCard: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "RUB"
+        formatter.locale = Locale(identifier: "ru_RU")
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: amount)) ?? "\(amount)"
     }
@@ -419,6 +421,7 @@ private struct TransactionRowView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = "RUB"
+        formatter.locale = Locale(identifier: "ru_RU")
         formatter.maximumFractionDigits = 2
         let amount = formatter.string(from: NSNumber(value: transaction.amount)) ?? "\(transaction.amount)"
         return transaction.isIncome ? "+\(amount)" : "-\(amount)"

@@ -52,13 +52,51 @@ struct Category: Identifiable, Codable, Equatable {
         else {
             return nil
         }
-        
+
         self.id = id
         self.title = title
         self.type = type
-        let icon = data["icon"] as? String ?? "tag"
-        self.icon = icon.isEmpty ? "tag" : icon
+        let raw = (data["iconName"] as? String) ?? (data["icon"] as? String) ?? ""
+        self.icon = Category.resolvedIcon(raw)
         self.isDefault = data["isDefault"] as? Bool ?? false
+    }
+
+    // Maps Material Design / legacy names → SF Symbols
+    static func resolvedIcon(_ name: String) -> String {
+        let map: [String: String] = [
+            // Material → SF Symbol
+            "cup":                    "cup.and.saucer",
+            "movie":                  "film",
+            "shopping_cart":          "cart",
+            "restaurant":             "fork.knife",
+            "directions_bus":         "bus",
+            "child":                  "person.2",
+            "paw":                    "pawprint",
+            "favorite":               "heart",
+            "checkroom":              "tshirt",
+            "arrow_turn":             "arrow.uturn.left",
+            "chart_line_uptrend":     "chart.line.uptrend.xyaxis",
+            "category":               "ellipsis.circle",
+            "work":                   "briefcase",
+            "card_giftcard":          "gift",
+            "laptop":                 "laptopcomputer",
+            "computer":               "desktopcomputer",
+            // common aliases
+            "percent":                "percent",
+            "house":                  "house",
+            "house.fill":             "house.fill",
+            "airplane":               "airplane",
+            "bolt":                   "bolt",
+            "sparkles":               "sparkles",
+            "repeat":                 "repeat",
+            "pawprint":               "pawprint",
+            "wrench.and.screwdriver": "wrench.and.screwdriver",
+            "graduationcap":          "graduationcap",
+            "creditcard":             "creditcard",
+            "figure.run":             "figure.run",
+        ]
+        let resolved = map[name] ?? name
+        return resolved.isEmpty ? "tag" : resolved
     }
     
     static let fallbackCategories: [Category] = [

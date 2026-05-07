@@ -115,6 +115,12 @@ final class TransactionsViewModel: ObservableObject {
             result + (transaction.isIncome ? transaction.amount : -transaction.amount)
         }
     }
+
+    var filteredBalance: Double {
+        filteredTransactions.reduce(0) { result, transaction in
+            result + (transaction.isIncome ? transaction.amount : -transaction.amount)
+        }
+    }
     
     var monthIncome: Double {
         currentMonthTransactions
