@@ -17,7 +17,8 @@ struct TransactionsView: View {
     @EnvironmentObject private var authViewModel: AuthViewModel
     @StateObject private var viewModel = TransactionsViewModel()
     @State private var editorRoute: TransactionEditorRoute?
-    
+    @State private var showFilterSheet = false
+
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
@@ -70,6 +71,9 @@ struct TransactionsView: View {
                     )
                 }
             }
+            .sheet(isPresented: $showFilterSheet) {
+                FilterSheetView(viewModel: viewModel)
+            }
             .alert("Ошибка", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -114,58 +118,66 @@ struct TransactionsView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16))
                     .foregroundColor(AppColors.grayTextColor)
-                
-                TextField("Search transactions", text: $viewModel.searchText)
+                TextField("Поиск транзакций", text: $viewModel.searchText)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
             }
             .padding(.horizontal, 16)
             .frame(height: 40)
             .background(AppColors.whiteFrameColor)
-            .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
-            )
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
             .cornerRadius(16)
-            
+
             Menu {
-                Button("Все") {
-                    viewModel.selectedType = nil
-                }
-                Button("Расходы") {
-                    viewModel.selectedType = .expense
-                }
-                Button("Доходы") {
-                    viewModel.selectedType = .income
+                ForEach(SortOption.allCases) { option in
+                    Button {
+                        viewModel.sortOption = option
+                    } label: {
+                        HStack {
+                            Text(option.rawValue)
+                            if viewModel.sortOption == option {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
                 }
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "slider.horizontal.3")
-                    Text(filterTitle)
-                        .fontWeight(.medium)
-                }
-                .foregroundColor(AppColors.lightGreenFrameColor)
-                .frame(height: 40)
-                .padding(.horizontal, 18)
-                .background(AppColors.whiteFrameColor)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(AppColors.lightGreenFrameColor, lineWidth: 1)
-                )
-                .cornerRadius(18)
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(viewModel.sortOption == .dateDescending
+                        ? AppColors.grayTextColor : AppColors.darkGreenFrameColor)
+                    .frame(width: 40, height: 40)
+                    .background(AppColors.whiteFrameColor)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(
+                        viewModel.sortOption == .dateDescending
+                            ? AppColors.lightGrayFrameColor : AppColors.lightGreenFrameColor,
+                        lineWidth: 1
+                    ))
+                    .cornerRadius(12)
             }
-        }
-    }
-    
-    //MARK: Sorting, Filter update to selection window
-    private var filterTitle: String {
-        switch viewModel.selectedType {
-        case .income:
-            return "Доходы"
-        case .expense:
-            return "Расходы"
-        case nil:
-            return "Filter"
+
+            Button { showFilterSheet = true } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(viewModel.hasActiveFilters
+                            ? AppColors.darkGreenFrameColor : AppColors.grayTextColor)
+                        .frame(width: 40, height: 40)
+                        .background(AppColors.whiteFrameColor)
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(
+                            viewModel.hasActiveFilters
+                                ? AppColors.lightGreenFrameColor : AppColors.lightGrayFrameColor,
+                            lineWidth: 1
+                        ))
+                        .cornerRadius(12)
+                    if viewModel.hasActiveFilters {
+                        Circle()
+                            .fill(AppColors.lightGreenFrameColor)
+                            .frame(width: 9, height: 9)
+                            .offset(x: 2, y: -2)
+                    }
+                }
+            }
         }
     }
     
@@ -242,9 +254,11 @@ struct TransactionsView: View {
             VStack(alignment: .leading, spacing: 18) {
                 ForEach(viewModel.groupedTransactions, id: \.title) { section in
                     VStack(alignment: .leading, spacing: 10) {
-                        Text(section.title)
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(AppColors.darkGrayTextColor)
+                        if !section.title.isEmpty {
+                            Text(section.title)
+                                .font(.system(size: 17, weight: .medium))
+                                .foregroundColor(AppColors.darkGrayTextColor)
+                        }
                         
                         VStack(spacing: 0) {
                             ForEach(section.transactions) { transaction in
@@ -257,32 +271,22 @@ struct TransactionsView: View {
                                 .onTapGesture {
                                     editorRoute = TransactionEditorRoute(transaction: transaction)
                                 }
-                                .contextMenu {
-                                    Button {
-                                        editorRoute = TransactionEditorRoute(transaction: transaction)
-                                    } label: {
-                                        Label("Редактировать", systemImage: "pencil")
-                                    }
-                                    
-                                    Button(role: .destructive) {
-                                        viewModel.delete(transaction)
-                                    } label: {
-                                        Label("Удалить", systemImage: "trash")
-                                    }
+                                .swipeToDelete {
+                                    viewModel.delete(transaction)
                                 }
-                                
+
                                 if transaction.id != section.transactions.last?.id {
                                     Divider()
-                                        .padding(.leading, 82)
+                                        .padding(.leading, 66)
                                 }
                             }
                         }
                         .background(AppColors.whiteFrameColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
                         .overlay(
                             RoundedRectangle(cornerRadius: 22)
                                 .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
                         )
-                        .cornerRadius(22)
                     }
                 }
             }
@@ -295,10 +299,11 @@ struct TransactionsView: View {
         formatter.currencyCode = "RUB"
         formatter.maximumFractionDigits = 2
         
-        let formatted = formatter.string(from: NSNumber(value: abs(amount))) ?? "\(abs(amount))"
-        guard showSign else { return formatted }
-        
-        return amount >= 0 ? "+\(formatted)" : "-\(formatted)"
+        if showSign {
+            let formatted = formatter.string(from: NSNumber(value: abs(amount))) ?? "\(abs(amount))"
+            return amount >= 0 ? "+\(formatted)" : "-\(formatted)"
+        }
+        return formatter.string(from: NSNumber(value: amount)) ?? "\(amount)"
     }
 }
 
@@ -611,6 +616,245 @@ private extension String {
         // "1200," → "1200." → fractionPart пуст → возвращаем без точки,
         // иначе Double("1200.") = nil и кнопка заблокирована
         return fractionPart.isEmpty ? String(integerPart) : "\(integerPart).\(fractionPart)"
+    }
+}
+
+private struct SwipeToDeleteModifier: ViewModifier {
+    let onDelete: () -> Void
+    @State private var offset: CGFloat = 0
+    private let threshold: CGFloat = 75
+
+    func body(content: Content) -> some View {
+        ZStack(alignment: .trailing) {
+            Color.red
+                .frame(width: max(0, -offset))
+                .overlay(
+                    Image(systemName: "trash")
+                        .foregroundColor(.white)
+                        .font(.system(size: 18, weight: .semibold))
+                        .opacity(min(1, -offset / 30))
+                        .padding(.trailing, 22),
+                    alignment: .trailing
+                )
+
+            content
+                .offset(x: offset)
+                .gesture(
+                    DragGesture(minimumDistance: 15, coordinateSpace: .local)
+                        .onChanged { value in
+                            guard value.translation.width < 0 else { return }
+                            offset = max(value.translation.width, -threshold)
+                        }
+                        .onEnded { value in
+                            if value.translation.width < -(threshold * 0.55) {
+                                withAnimation(.easeIn(duration: 0.22)) { offset = -400 }
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) { onDelete() }
+                            } else {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { offset = 0 }
+                            }
+                        }
+                )
+        }
+        .clipped()
+    }
+}
+
+private extension View {
+    func swipeToDelete(onDelete: @escaping () -> Void) -> some View {
+        modifier(SwipeToDeleteModifier(onDelete: onDelete))
+    }
+}
+
+private struct FilterSheetView: View {
+    @ObservedObject var viewModel: TransactionsViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    private enum DateField { case start, end }
+
+    @State private var localType: TransactionType?
+    @State private var localStart: Date?
+    @State private var localEnd: Date?
+    @State private var localCategories: Set<String> = []
+    @State private var activeDateField: DateField?
+
+    private var visibleCategories: [Category] {
+        guard let type = localType else { return viewModel.categories }
+        return viewModel.categories.filter { $0.type == type }
+    }
+
+    private var endOfToday: Date {
+        Calendar.current.date(bySettingHour: 23, minute: 59, second: 59, of: Date()) ?? Date()
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Тип операции") {
+                    Picker("Тип", selection: $localType) {
+                        Text("Все").tag(Optional<TransactionType>.none)
+                        Text("Доходы").tag(Optional<TransactionType>.some(.income))
+                        Text("Расходы").tag(Optional<TransactionType>.some(.expense))
+                    }
+                    .pickerStyle(.segmented)
+                    .onChange(of: localType) { _, _ in
+                        localCategories = localCategories.filter { title in
+                            visibleCategories.contains { $0.title == title }
+                        }
+                        activeDateField = nil
+                    }
+                }
+
+                Section("Период") {
+                    HStack(spacing: 0) {
+                        dateCell(label: "Начало", date: localStart, field: .start) {
+                            localStart = nil
+                            if activeDateField == .start { activeDateField = nil }
+                        }
+                        Divider().frame(height: 44)
+                        dateCell(label: "Конец", date: localEnd, field: .end) {
+                            localEnd = nil
+                            if activeDateField == .end { activeDateField = nil }
+                        }
+                        .padding(.leading, 12)
+                    }
+
+                    if activeDateField == .start {
+                        DatePicker("", selection: Binding(
+                            get: { localStart ?? Calendar.current.startOfDay(for: Date()) },
+                            set: { newDate in
+                                localStart = newDate
+                                if let end = localEnd, newDate > end { localEnd = newDate }
+                                activeDateField = nil
+                            }
+                        ), in: ...endOfToday, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .labelsHidden()
+                    }
+
+                    if activeDateField == .end {
+                        DatePicker("", selection: Binding(
+                            get: { localEnd ?? Calendar.current.startOfDay(for: Date()) },
+                            set: { newDate in
+                                localEnd = newDate
+                                if let start = localStart, newDate < start { localStart = newDate }
+                                activeDateField = nil
+                            }
+                        ), in: ...endOfToday, displayedComponents: .date)
+                        .datePickerStyle(.graphical)
+                        .labelsHidden()
+                    }
+                }
+
+                if !visibleCategories.isEmpty {
+                    Section("Категории") {
+                        ForEach(visibleCategories) { category in
+                            HStack {
+                                Image(systemName: category.icon)
+                                    .foregroundColor(AppColors.lightGreenFrameColor)
+                                    .frame(width: 24)
+                                Text(category.title)
+                                Spacer()
+                                if localCategories.contains(category.title) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(AppColors.lightGreenFrameColor)
+                                        .fontWeight(.semibold)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if localCategories.contains(category.title) {
+                                    localCategories.remove(category.title)
+                                } else {
+                                    localCategories.insert(category.title)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    Button("Сбросить фильтры", role: .destructive) {
+                        viewModel.resetFilters()
+                        dismiss()
+                    }
+                }
+            }
+            .navigationTitle("Фильтры")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Отмена") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Применить") {
+                        viewModel.selectedType = localType
+                        viewModel.filterStartDate = localStart
+                        viewModel.filterEndDate = localEnd
+                        viewModel.selectedCategories = localCategories
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                localType = viewModel.selectedType
+                localStart = viewModel.filterStartDate
+                localEnd = viewModel.filterEndDate
+                localCategories = viewModel.selectedCategories
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func dateCell(label: String, date: Date?, field: DateField, onClear: @escaping () -> Void) -> some View {
+        let isActive = activeDateField == field
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                if let date {
+                    HStack(spacing: 4) {
+                        Text(formatted(date))
+                            .font(.subheadline)
+                            .foregroundColor(isActive ? AppColors.lightGreenFrameColor : .primary)
+                        Button(action: onClear) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else {
+                    Text("—")
+                        .font(.subheadline)
+                        .foregroundColor(isActive ? AppColors.lightGreenFrameColor : .secondary)
+                }
+            }
+            Spacer()
+        }
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                if isActive {
+                    activeDateField = nil
+                } else {
+                    let today = Calendar.current.startOfDay(for: Date())
+                    if field == .start && localStart == nil { localStart = today }
+                    if field == .end   && localEnd == nil   { localEnd = today }
+                    activeDateField = field
+                }
+            }
+        }
+    }
+
+    private func formatted(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ru_RU")
+        f.dateFormat = "d MMM yyyy"
+        return f.string(from: date)
     }
 }
 

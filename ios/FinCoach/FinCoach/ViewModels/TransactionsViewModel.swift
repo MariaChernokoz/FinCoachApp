@@ -16,6 +16,14 @@ struct TransactionDraft: Equatable, Sendable {
     let date: Date
 }
 
+enum SortOption: String, CaseIterable, Identifiable {
+    case dateDescending  = "Сначала новые"
+    case dateAscending   = "Сначала старые"
+    case amountDescending = "Сначала дорогие"
+    case amountAscending  = "Сначала дешёвые"
+    var id: String { rawValue }
+}
+
 @MainActor
 final class TransactionsViewModel: ObservableObject {
     @Published private(set) var transactions: [Transaction] = []
@@ -26,6 +34,10 @@ final class TransactionsViewModel: ObservableObject {
     @Published var isSaving = false
     @Published var errorMessage: String?
     @Published var showError = false
+    @Published var sortOption: SortOption = .dateDescending
+    @Published var filterStartDate: Date?
+    @Published var filterEndDate: Date?
+    @Published var selectedCategories: Set<String> = []
 
     private let transactionsService = TransactionsService()
     private let categoriesService = CategoriesService()
@@ -34,31 +46,68 @@ final class TransactionsViewModel: ObservableObject {
     var filteredTransactions: [Transaction] {
         transactions.filter { transaction in
             let matchesSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-            transaction.title.localizedCaseInsensitiveContains(searchText) ||
-            transaction.category.localizedCaseInsensitiveContains(searchText)
-            
+                transaction.title.localizedCaseInsensitiveContains(searchText) ||
+                transaction.category.localizedCaseInsensitiveContains(searchText)
+
             let matchesType: Bool
             if let selectedType {
                 matchesType = transaction.isIncome == (selectedType == .income)
             } else {
                 matchesType = true
             }
-            
-            return matchesSearch && matchesType
+
+            let calendar = Calendar.current
+            let matchesDateRange: Bool
+            if let start = filterStartDate, let end = filterEndDate {
+                let endDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: end) ?? end
+                matchesDateRange = transaction.date >= start && transaction.date <= endDay
+            } else if let start = filterStartDate {
+                matchesDateRange = transaction.date >= start
+            } else if let end = filterEndDate {
+                let endDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: end) ?? end
+                matchesDateRange = transaction.date <= endDay
+            } else {
+                matchesDateRange = true
+            }
+
+            let matchesCategory = selectedCategories.isEmpty ||
+                selectedCategories.contains(transaction.category)
+
+            return matchesSearch && matchesType && matchesDateRange && matchesCategory
         }
+    }
+
+    var hasActiveFilters: Bool {
+        selectedType != nil || filterStartDate != nil || filterEndDate != nil || !selectedCategories.isEmpty
+    }
+
+    func resetFilters() {
+        selectedType = nil
+        filterStartDate = nil
+        filterEndDate = nil
+        selectedCategories = []
     }
     
     var groupedTransactions: [(title: String, transactions: [Transaction])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: filteredTransactions) { transaction in
-            calendar.startOfDay(for: transaction.date)
-        }
-        
-        return grouped
-            .sorted { $0.key > $1.key }
-            .map { date, transactions in
-                (Self.sectionTitle(for: date), transactions.sorted { $0.timestamp > $1.timestamp })
+        switch sortOption {
+        case .amountDescending:
+            return [("", filteredTransactions.sorted { $0.amount > $1.amount })]
+        case .amountAscending:
+            return [("", filteredTransactions.sorted { $0.amount < $1.amount })]
+        case .dateDescending, .dateAscending:
+            let calendar = Calendar.current
+            let grouped = Dictionary(grouping: filteredTransactions) { transaction in
+                calendar.startOfDay(for: transaction.date)
             }
+            let sortedDates = grouped.keys.sorted { sortOption == .dateAscending ? $0 < $1 : $0 > $1 }
+            return sortedDates.map { date in
+                let txns = grouped[date] ?? []
+                let sorted = sortOption == .dateAscending
+                    ? txns.sorted { $0.timestamp < $1.timestamp }
+                    : txns.sorted { $0.timestamp > $1.timestamp }
+                return (Self.sectionTitle(for: date), sorted)
+            }
+        }
     }
     
     var balance: Double {
