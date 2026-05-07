@@ -10,7 +10,7 @@ import SwiftUI
 import FirebaseFunctions
 import Combine
 
-class AIAssistantViewModel: ObservableObject {
+final class AIAssistantViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
