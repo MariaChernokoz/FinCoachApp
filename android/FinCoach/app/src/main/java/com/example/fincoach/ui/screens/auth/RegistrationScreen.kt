@@ -56,7 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fincoach.auth.AuthViewModel
+import com.example.fincoach.ui.screens.auth.AuthViewModel
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.BorderGray
 import com.example.fincoach.ui.theme.BrightGreen
@@ -253,7 +253,7 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
     }
 }
 
-// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ (Ниже основного экрана) ---
+//ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ (Ниже основного экрана)
 
 @Composable
 fun FinCoachTextField(

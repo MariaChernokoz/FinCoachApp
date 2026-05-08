@@ -1,7 +1,8 @@
-package com.example.fincoach.auth
+package com.example.fincoach.ui.screens.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.fincoach.data.repository.UserRepository
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.userProfileChangeRequest
@@ -12,7 +13,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class AuthViewModel : ViewModel() {
+
     private val auth = Firebase.auth
+    private val userRepository = UserRepository()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -23,16 +26,15 @@ class AuthViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
-    // Функция для очистки ошибки
     fun clearError() { _errorMessage.value = null }
 
+    // Регистрация
+
     fun registerUser(email: String, pass: String, name: String) {
-        // Проверка на пустые поля
         if (email.isEmpty() || pass.isEmpty() || name.isEmpty()) {
             _errorMessage.value = "Пожалуйста, заполните все поля"
             return
         }
-        // Проверка длины пароля
         if (pass.length < 6) {
             _errorMessage.value = "Пароль должен быть не менее 6 символов"
             return
@@ -41,9 +43,16 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
+                // 1. Создаём аккаунт в Firebase Auth
                 val result = auth.createUserWithEmailAndPassword(email, pass).await()
+
+                // 2. Обновляем displayName
                 val profileUpdates = userProfileChangeRequest { displayName = name }
                 result.user?.updateProfile(profileUpdates)?.await()
+
+                // 3. Создаём документ в коллекции users в Firestore
+                userRepository.createUserProfile(name = name, email = email)
+
                 _isAuthSuccess.value = true
             } catch (e: Exception) {
                 _errorMessage.value = "Ошибка регистрации: ${e.localizedMessage}"
@@ -52,6 +61,8 @@ class AuthViewModel : ViewModel() {
             }
         }
     }
+
+    // Вход
 
     fun loginUser(email: String, pass: String) {
         if (email.isEmpty() || pass.isEmpty()) {
@@ -62,10 +73,22 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                auth.signInWithEmailAndPassword(email, pass).await()
+                // 1. Авторизуемся в Firebase Auth
+                val result = auth.signInWithEmailAndPassword(email, pass).await()
+                val user = result.user
+
+                // 2. ПРОВЕРКА: существует ли профиль в Firestore?
+                // Это спасет ситуацию, если ты удалила базу вручную.
+                val profile = userRepository.getUserProfile()
+                if (profile == null && user != null) {
+                    userRepository.createUserProfile(
+                        name = user.displayName ?: "Пользователь",
+                        email = user.email ?: email
+                    )
+                }
+
                 _isAuthSuccess.value = true
             } catch (e: Exception) {
-                // Обработка конкретных ошибок входа
                 _errorMessage.value = "Неверный email или пароль"
             } finally {
                 _isLoading.value = false
@@ -73,38 +96,45 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun resetAuthStatus() {
-        _isAuthSuccess.value = false
-    }
-
-    fun getCurrentUserEmail(): String {
-        return auth.currentUser?.email ?: "Email не указан"
-    }
-
-    fun getCurrentUserName(): String {
-        // Если имени нет, вернем "Пользователь"
-        return auth.currentUser?.displayName ?: "Пользователь"
-    }
-
-    fun logout() {
-        auth.signOut()
-        resetAuthStatus()
-    }
-
-    // ----------------------------------------
+    // Google Sign-In
 
     fun signInWithGoogle(idToken: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
-                auth.signInWithCredential(credential).await()
+                val result = auth.signInWithCredential(credential).await()
+
+                // Если пользователь новый — создаём профиль в Firestore
+                val isNewUser = result.additionalUserInfo?.isNewUser == true
+                if (isNewUser) {
+                    val user = result.user
+                    userRepository.createUserProfile(
+                        name  = user?.displayName ?: "Пользователь",
+                        email = user?.email ?: ""
+                    )
+                }
+
                 _isAuthSuccess.value = true
             } catch (e: Exception) {
-                _isAuthSuccess.value = false
+                _errorMessage.value = "Ошибка входа через Google"
             } finally {
                 _isLoading.value = false
             }
         }
     }
+
+    // Вспомогательные
+
+    fun logout() {
+        auth.signOut()
+        resetAuthStatus()
+    }
+
+    fun resetAuthStatus() {
+        _isAuthSuccess.value = false
+    }
+
+    fun getCurrentUserEmail(): String = auth.currentUser?.email ?: "Email не указан"
+    fun getCurrentUserName(): String  = auth.currentUser?.displayName ?: "Пользователь"
 }
