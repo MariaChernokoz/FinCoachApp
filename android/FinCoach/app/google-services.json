@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "909169891407",
+    "project_id": "fincoachapp-b02ac",
+    "storage_bucket": "fincoachapp-b02ac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:909169891407:android:7eda87f5be76b67417f23a",
+        "android_client_info": {
+          "package_name": "com.example.fincoach"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "909169891407-67g62advf2vt5dolol12hll11oivpuln.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.fincoach",
+            "certificate_hash": "6b7dc304404a0feefef9d4399c8b1f416f7e3605"
+          }
+        },
+        {
+          "client_id": "909169891407-4vkc6ap9hgtusg5ou83o1ovqh2ltjmig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQODA2OJ7__8ANriePqEjNiIee2x9ZXhM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "909169891407-4vkc6ap9hgtusg5ou83o1ovqh2ltjmig.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "909169891407-5jpqi1v3bh5dig4tdic7idg8p7rh9g7q.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "maria.chernokoz.FinCoach"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
