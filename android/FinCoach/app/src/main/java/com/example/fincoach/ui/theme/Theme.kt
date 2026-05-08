@@ -14,7 +14,7 @@ private val DarkColorScheme = darkColorScheme(
     primary = BrightGreen,
     secondary = DeepGreen,
     tertiary = PurpleAccent,
-    background = DeepGreen,
+    background = BgLightGray,  // было DeepGreen
     surface = White
 )
 
@@ -22,25 +22,23 @@ private val LightColorScheme = lightColorScheme(
     primary = BrightGreen,
     secondary = DeepGreen,
     tertiary = PurpleAccent,
-    background = DeepGreen,
+    background = BgLightGray,  // было DeepGreen
     surface = White
 )
 
 @Composable
 fun FinCoachTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Выключаем dynamicColor по умолчанию (ставим false)
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
-    // Код для того, чтобы верхняя полоска (Status Bar) тоже была в цвет фона
     val view = LocalView.current
     if (!view.isInEditMode) {
         val window = (view.context as Activity).window
-        window.statusBarColor = DeepGreen.toArgb() // Ставим цвет #77D43C
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        window.statusBarColor = BgLightGray.toArgb()
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
     }
 
     MaterialTheme(
