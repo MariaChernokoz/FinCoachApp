@@ -2,20 +2,13 @@ package com.example.fincoach.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material3.Icon
@@ -43,9 +36,7 @@ fun FinCoachBottomBar(
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(64.dp),
+            modifier = Modifier.fillMaxWidth().height(64.dp),
             shape = RoundedCornerShape(36.dp),
             color = White,
             shadowElevation = 8.dp
@@ -55,8 +46,11 @@ fun FinCoachBottomBar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                NavigationIcon(Icons.Default.List, activeTab == 0) { onNavigate("history") }
+                // Цели (tab 0)
+                NavigationIcon(Icons.Default.Star, activeTab == 0) { onNavigate("goals") }
+                // Аналитика (tab 2)
                 NavigationIcon(Icons.Default.Analytics, activeTab == 2) { onNavigate("analytics") }
+                // Центр: Транзакции (tab 1)
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -71,7 +65,9 @@ fun FinCoachBottomBar(
                         modifier = Modifier.size(26.dp)
                     )
                 }
+                // Ассистент (tab 3)
                 NavigationIcon(Icons.Rounded.AutoAwesome, activeTab == 3) { onNavigate("assistant") }
+                // Настройки (tab 4)
                 NavigationIcon(Icons.Default.Person, activeTab == 4) { onNavigate("settings") }
             }
         }

@@ -15,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.fincoach.ui.FinCoachBottomBar
 import com.example.fincoach.ui.screens.analytics.AnalyticsScreen
 import com.example.fincoach.ui.screens.assistant.AssistantScreen
+import com.example.fincoach.ui.screens.goals.GoalsScreen
 import com.example.fincoach.ui.screens.settings.SettingsScreen
 import com.example.fincoach.ui.screens.transactions.AddTransactionScreen
 import com.example.fincoach.ui.screens.transactions.TransactionHistoryScreen
@@ -27,7 +28,6 @@ import com.google.firebase.ktx.Firebase
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // enableEdgeToEdge() убран — он вызывал полоску системной навигации
         setContent {
             FinCoachTheme {
                 FinCoachApp()
@@ -42,7 +42,7 @@ fun FinCoachApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val bottomBarRoutes = setOf("transactions", "history", "analytics", "assistant", "settings")
+    val bottomBarRoutes = setOf("transactions", "goals", "analytics", "assistant", "settings")
 
     Scaffold(
         containerColor = BgLightGray,
@@ -50,7 +50,7 @@ fun FinCoachApp() {
             if (currentRoute in bottomBarRoutes) {
                 FinCoachBottomBar(
                     activeTab = when (currentRoute) {
-                        "history"      -> 0
+                        "goals"        -> 0
                         "transactions" -> 1
                         "analytics"    -> 2
                         "assistant"    -> 3
@@ -89,11 +89,14 @@ fun FinCoachApp() {
                     onNavigateToSettings = { navController.navigate("settings") }
                 )
             }
-            composable("history") {
-                TransactionHistoryScreen(onBack = { navController.popBackStack() })
+            composable("goals") {
+                GoalsScreen()
             }
             composable("analytics") {
                 AnalyticsScreen()
+            }
+            composable("assistant") {
+                AssistantScreen()
             }
             composable("settings") {
                 SettingsScreen(
@@ -109,8 +112,9 @@ fun FinCoachApp() {
                     onSuccess = { navController.popBackStack() }
                 )
             }
-            composable("assistant") {
-                AssistantScreen()
+            // История доступна только из TransactionsScreen
+            composable("history") {
+                TransactionHistoryScreen(onBack = { navController.popBackStack() })
             }
         }
     }

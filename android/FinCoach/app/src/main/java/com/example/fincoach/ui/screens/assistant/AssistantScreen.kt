@@ -1,5 +1,11 @@
 package com.example.fincoach.ui.screens.assistant
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -54,21 +62,30 @@ import com.example.fincoach.ui.theme.TextPlaceholder
 import com.example.fincoach.ui.theme.White
 import com.example.fincoach.viewmodel.AssistantViewModel
 import com.example.fincoach.viewmodel.ChatMessage
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun AssistantScreen() {
     val vm: AssistantViewModel = viewModel()
     val messages  by vm.messages.collectAsState()
     val isLoading by vm.isLoading.collectAsState()
+    val error     by vm.error.collectAsState()
 
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
-    // Прокручиваем вниз когда появляется новое сообщение
+    // Скролл вниз при новом сообщении
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
+    }
+
+    // Toast при ошибке
+    LaunchedEffect(error) {
+        if (error != null) vm.clearError()
     }
 
     Column(
@@ -76,7 +93,7 @@ fun AssistantScreen() {
             .fillMaxSize()
             .background(BgLightGray)
     ) {
-        // Шапка
+        // ── Шапка ────────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,7 +101,6 @@ fun AssistantScreen() {
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Аватар ИИ
             Box(
                 modifier = Modifier
                     .size(38.dp)
@@ -97,7 +113,7 @@ fun AssistantScreen() {
             Spacer(Modifier.width(10.dp))
             Column {
                 Text(
-                    "Финансовый ассистент",
+                    "AI Коуч",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = TextBlack
@@ -112,46 +128,44 @@ fun AssistantScreen() {
 
         HorizontalDivider(color = BgLightGray)
 
-        //Сообщения
+        // ── Сообщения ─────────────────────────────────────────────────────────
         LazyColumn(
             state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(messages) { message ->
+            items(messages, key = { it.id }) { message ->
                 MessageBubble(message = message)
             }
-
-            // Индикатор загрузки
             if (isLoading) {
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                         TypingIndicator()
                     }
                 }
             }
+            item { Spacer(Modifier.height(4.dp)) }
         }
 
-        // ── Быстрые вопросы (показываем только если 1 сообщение — приветствие) ──
+        // ── Быстрые вопросы (только при первом открытии) ──────────────────────
         if (messages.size == 1 && !isLoading) {
-            QuickQuestions(
+            ExampleQuestions(
                 questions = listOf(
-                    "На что я трачу больше всего?",
-                    "Как мне сэкономить?",
-                    "Проанализируй мои расходы",
-                    "Как правильно вести бюджет?"
+                    "Дай общую статистику моих трат",
+                    "Почему я трачу так много?",
+                    "Как оптимизировать мой бюджет?",
+                    "Успею ли я накопить на цель?"
                 ),
-                onQuestionClick = { vm.sendMessage(it) }
+                onQuestionClick = {
+                    vm.sendMessage(it)
+                }
             )
         }
 
-        //Поле ввода
+        HorizontalDivider(color = BgLightGray)
+
+        // ── Поле ввода ────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -162,7 +176,7 @@ fun AssistantScreen() {
             TextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                placeholder = { Text("Напишите вопрос...", color = TextPlaceholder) },
+                placeholder = { Text("Задайте вопрос...", color = TextPlaceholder) },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(24.dp),
                 colors = TextFieldDefaults.colors(
@@ -174,36 +188,34 @@ fun AssistantScreen() {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = {
                     if (inputText.isNotBlank() && !isLoading) {
-                        vm.sendMessage(inputText)
+                        vm.sendMessage(inputText.trim())
                         inputText = ""
                     }
                 }),
                 maxLines = 4
             )
-
             Spacer(Modifier.width(8.dp))
-
-            // Кнопка отправки
+            val canSend = inputText.isNotBlank() && !isLoading
             Box(
                 modifier = Modifier
                     .size(46.dp)
                     .clip(CircleShape)
-                    .background(if (!isLoading && inputText.isNotBlank()) DeepGreen else BgLightGray),
+                    .background(if (canSend) DeepGreen else BgLightGray),
                 contentAlignment = Alignment.Center
             ) {
                 IconButton(
                     onClick = {
-                        if (inputText.isNotBlank() && !isLoading) {
-                            vm.sendMessage(inputText)
+                        if (canSend) {
+                            vm.sendMessage(inputText.trim())
                             inputText = ""
                         }
                     },
-                    enabled = !isLoading && inputText.isNotBlank()
+                    enabled = canSend
                 ) {
                     Icon(
                         Icons.Default.Send,
                         contentDescription = "Отправить",
-                        tint = if (!isLoading && inputText.isNotBlank()) White else TextPlaceholder,
+                        tint = if (canSend) White else TextPlaceholder,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -212,18 +224,20 @@ fun AssistantScreen() {
     }
 }
 
-// Пузырь сообщения
+// ── Пузырь сообщения ──────────────────────────────────────────────────────────
 
 @Composable
 private fun MessageBubble(message: ChatMessage) {
     val isUser = message.isUser
+    val timeLabel = remember(message.timestamp) {
+        SimpleDateFormat("HH:mm", Locale("ru")).format(Date(message.timestamp))
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
         verticalAlignment = Alignment.Bottom
     ) {
-        // Аватар бота
         if (!isUser) {
             Box(
                 modifier = Modifier
@@ -237,35 +251,47 @@ private fun MessageBubble(message: ChatMessage) {
             Spacer(Modifier.width(6.dp))
         }
 
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .clip(
-                    RoundedCornerShape(
-                        topStart    = 18.dp,
-                        topEnd      = 18.dp,
-                        bottomStart = if (isUser) 18.dp else 4.dp,
-                        bottomEnd   = if (isUser) 4.dp else 18.dp
-                    )
-                )
-                .background(if (isUser) DeepGreen else White)
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+        Column(
+            horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
         ) {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart    = 18.dp,
+                            topEnd      = 18.dp,
+                            bottomStart = if (isUser) 18.dp else 4.dp,
+                            bottomEnd   = if (isUser) 4.dp else 18.dp
+                        )
+                    )
+                    .background(
+                        if (isUser) DeepGreen
+                        else Color.Gray.copy(alpha = 0.15f)
+                    )
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = message.text,
+                    color = if (isUser) White else TextBlack,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+            }
+            Spacer(Modifier.height(2.dp))
             Text(
-                text = message.text,
-                color = if (isUser) White else TextBlack,
-                fontSize = 14.sp,
-                lineHeight = 20.sp
+                text = timeLabel,
+                fontSize = 10.sp,
+                color = TextPlaceholder,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
 
-        if (isUser) {
-            Spacer(Modifier.width(6.dp))
-        }
+        if (isUser) Spacer(Modifier.width(6.dp))
     }
 }
 
-//Индикатор печати
+// ── Анимированный индикатор печати ────────────────────────────────────────────
 
 @Composable
 private fun TypingIndicator() {
@@ -276,14 +302,26 @@ private fun TypingIndicator() {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(18.dp))
-                .background(White)
+                .background(Color.Gray.copy(alpha = 0.15f))
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                repeat(3) {
+                repeat(3) { index ->
+                    val infiniteTransition = rememberInfiniteTransition(label = "dot$index")
+                    val scale by infiniteTransition.animateFloat(
+                        initialValue = 0.5f,
+                        targetValue  = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(600),
+                            repeatMode = RepeatMode.Reverse,
+                            initialStartOffset = StartOffset(index * 200)
+                        ),
+                        label = "scale$index"
+                    )
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
+                            .size(8.dp)
+                            .scale(scale)
                             .clip(CircleShape)
                             .background(TextGray)
                     )
@@ -293,49 +331,42 @@ private fun TypingIndicator() {
     }
 }
 
-// Быстрые вопросы
+// ── Быстрые вопросы ───────────────────────────────────────────────────────────
 
 @Composable
-private fun QuickQuestions(
+private fun ExampleQuestions(
     questions: List<String>,
     onQuestionClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .background(White)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            "Попробуй спросить:",
-            color = TextGray,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
-        )
-        questions.chunked(2).forEach { row ->
-            Row(
+        Text("Примеры вопросов:", color = TextGray, fontSize = 12.sp)
+        questions.forEach { question ->
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = BgLightGray,
+                onClick = { onQuestionClick(question) }
             ) {
-                row.forEach { question ->
-                    Surface(
-                        modifier = Modifier
-                            .weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        color = White,
-                        shadowElevation = 1.dp,
-                        onClick = { onQuestionClick(question) }
-                    ) {
-                        Text(
-                            text = question,
-                            modifier = Modifier.padding(10.dp),
-                            fontSize = 12.sp,
-                            color = TextDarkGray,
-                            lineHeight = 16.sp
-                        )
-                    }
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("💡", fontSize = 14.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = question,
+                        fontSize = 13.sp,
+                        color = TextDarkGray,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text("›", color = TextGray, fontSize = 18.sp)
                 }
-                if (row.size == 1) Spacer(Modifier.weight(1f))
             }
         }
     }

@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.google.play.services.auth)
+    implementation("com.google.firebase:firebase-functions-ktx")
 
     // Навигация и ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
