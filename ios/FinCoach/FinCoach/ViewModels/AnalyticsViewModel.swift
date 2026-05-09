@@ -52,6 +52,7 @@ final class AnalyticsViewModel: ObservableObject {
     @Published private(set) var categories: [Category] = []
     @Published private(set) var budgets: [Budget] = []
     @Published var period: AnalyticsPeriod = .month
+    @Published var excludedChartCategories: Set<String> = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showError = false
@@ -93,6 +94,31 @@ final class AnalyticsViewModel: ObservableObject {
     }
 
     // MARK: - Donut chart
+
+    func toggleChartCategory(_ category: String) {
+        if excludedChartCategories.contains(category) {
+            excludedChartCategories.remove(category)
+        } else {
+            excludedChartCategories.insert(category)
+        }
+    }
+
+    var filteredCategoryBreakdown: [CategorySpending] {
+        let all = categoryBreakdown
+        guard !excludedChartCategories.isEmpty else { return all }
+        let visible = all.filter { !excludedChartCategories.contains($0.category) }
+        let visibleTotal = visible.reduce(0) { $0 + $1.amount }
+        guard visibleTotal > 0 else { return [] }
+        return visible.map { item in
+            CategorySpending(
+                category: item.category,
+                icon: item.icon,
+                amount: item.amount,
+                percentage: item.amount / visibleTotal * 100,
+                color: item.color
+            )
+        }
+    }
 
     var categoryBreakdown: [CategorySpending] {
         let expenses = periodTransactions.filter { !$0.isIncome }

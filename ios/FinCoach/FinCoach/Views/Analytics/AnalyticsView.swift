@@ -32,8 +32,11 @@ struct AnalyticsView: View {
                         } else {
                             if !viewModel.categoryBreakdown.isEmpty {
                                 DonutChartView(
-                                    breakdown: viewModel.categoryBreakdown,
-                                    total: viewModel.periodExpense,
+                                    allBreakdown: viewModel.categoryBreakdown,
+                                    chartBreakdown: viewModel.filteredCategoryBreakdown,
+                                    excludedCategories: viewModel.excludedChartCategories,
+                                    onToggle: { viewModel.toggleChartCategory($0) },
+                                    onReset: { viewModel.excludedChartCategories = [] },
                                     onShowAll: { showAllCategories = true }
                                 )
                             }

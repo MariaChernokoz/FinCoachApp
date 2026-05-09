@@ -44,21 +44,25 @@ struct AnalyticsSummaryCards: View {
     }
 
     private func savingsBanner(rate: Double) -> some View {
-        let positive = rate > 0
+        let message = rate >= 0
+            ? String(format: "Вы сэкономили %.0f%% дохода", rate)
+            : String(format: "Расходы превысили доходы на %.0f%%", abs(rate))
         return HStack(spacing: 8) {
-            Image(systemName: positive ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .font(.system(size: 14))
-                .foregroundColor(positive ? AppColors.lightGreenFrameColor : .red)
-            Text(positive
-                 ? String(format: "Вы сэкономили %.0f%% дохода", rate)
-                 : String(format: "Расходы превысили доходы на %.0f%%", abs(rate)))
+            Image(systemName: rate >= 0 ? "leaf.fill" : "exclamationmark.circle")
+                .font(.system(size: 13))
+                .foregroundColor(AppColors.darkGrayTextColor)
+            Text(message)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(positive ? AppColors.darkGreenFrameColor : .red)
+                .foregroundColor(AppColors.darkGrayTextColor)
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background((positive ? AppColors.lightGreenFrameColor : Color.red).opacity(0.08))
+        .background(AppColors.lightGreenFrameColor.opacity(0.15))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppColors.lightGreenFrameColor.opacity(0.35), lineWidth: 1)
+        )
         .cornerRadius(12)
     }
 

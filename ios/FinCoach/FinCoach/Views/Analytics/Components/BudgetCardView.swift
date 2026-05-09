@@ -17,12 +17,12 @@ struct BudgetCardView: View {
     var body: some View {
         HStack(spacing: 16) {
             Circle()
-                .fill(AppColors.purpleFrameColor.opacity(0.2))
-                .frame(width: 48, height: 48)
+                .fill(AppColors.lightGreenFrameColor.opacity(0.65))
+                .frame(width: 44, height: 44)
                 .overlay(
                     Image(systemName: categoryIcon)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(AppColors.purpleFrameColor)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.darkGrayTextColor)
                 )
 
             VStack(alignment: .leading, spacing: 8) {
