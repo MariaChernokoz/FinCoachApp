@@ -10,13 +10,12 @@ import SwiftUI
 struct OverflowMetricCard: View {
     let title: String
     let amount: Double
-    let icon: String
-    let color: Color
+    let imageName: String
 
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 4) {
-                Spacer().frame(height: 36)
+                Spacer().frame(height: 52)
                 Text(currency(amount))
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(AppColors.blackTextColor)
@@ -34,17 +33,13 @@ struct OverflowMetricCard: View {
                     .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
             )
             .cornerRadius(16)
-            .padding(.top, 30)
+            .padding(.top, 20)
 
-            Circle()
-                .fill(color.opacity(0.15))
-                .frame(width: 60, height: 60)
-                .overlay(Circle().stroke(color.opacity(0.25), lineWidth: 1))
-                .overlay(
-                    Image(systemName: icon)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(color)
-                )
+            Image(imageName)
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 96, height: 96)
         }
     }
 

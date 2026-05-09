@@ -199,18 +199,16 @@ struct TransactionsView: View {
                 OverflowMetricCard(
                     title: "Расходы",
                     amount: viewModel.monthExpense,
-                    icon: "arrow.up.right",
-                    color: AppColors.purpleFrameColor
+                    imageName: "money"
                 )
                 OverflowMetricCard(
                     title: "Доходы",
                     amount: viewModel.monthIncome,
-                    icon: "arrow.down.left",
-                    color: AppColors.lightGreenFrameColor
+                    imageName: "pig"
                 )
             }
             .padding(.horizontal, 16)
-            .padding(.top, 22)
+            .padding(.top, 8)
             .padding(.bottom, 10)
         }
         .background(

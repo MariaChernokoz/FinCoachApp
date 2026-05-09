@@ -45,9 +45,10 @@ final class TransactionsViewModel: ObservableObject {
     
     var filteredTransactions: [Transaction] {
         transactions.filter { transaction in
-            let matchesSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                transaction.title.localizedCaseInsensitiveContains(searchText) ||
-                transaction.category.localizedCaseInsensitiveContains(searchText)
+            let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let matchesSearch = query.isEmpty ||
+                fuzzyMatches(query: query, in: transaction.title) ||
+                fuzzyMatches(query: query, in: transaction.category)
 
             let matchesType: Bool
             if let selectedType {
