@@ -174,22 +174,17 @@ final class TransactionsViewModel: ObservableObject {
         existing transaction: Transaction?,
         draft: TransactionDraft
     ) async -> Bool {
-        print("[FinCoach][VM] saveTransaction | title='\(draft.title)' amount=\(draft.amount) isIncome=\(draft.isIncome) userId=\(userId ?? "nil")")
-
         guard let userId else {
-            print("[FinCoach][VM] FAIL no userId")
             presentError("Пользователь не найден")
             return false
         }
 
         guard !draft.title.isEmpty else {
-            print("[FinCoach][VM] FAIL title empty")
             presentError("Введите название")
             return false
         }
 
         guard draft.amount.isFinite, draft.amount > 0 else {
-            print("[FinCoach][VM] FAIL amount=\(draft.amount) isFinite=\(draft.amount.isFinite)")
             presentError("Введите сумму больше 0")
             return false
         }
@@ -204,21 +199,32 @@ final class TransactionsViewModel: ObservableObject {
             userId: userId
         )
         
-        isSaving = true
-        defer { isSaving = false }
-
-        do {
-            if transaction == nil {
-                try await transactionsService.create(savedTransaction)
-            } else {
-                try await transactionsService.update(savedTransaction)
-            }
-            await loadTransactions()
-            return true
-        } catch {
-            presentError(error.localizedDescription)
-            return false
+        if transaction == nil {
+            transactions.insert(savedTransaction, at: 0)
+        } else if let i = transactions.firstIndex(where: { $0.id == savedTransaction.id }) {
+            transactions[i] = savedTransaction
         }
+
+        Task {
+            do {
+                if transaction == nil {
+                    try await transactionsService.create(savedTransaction)
+                } else {
+                    try await transactionsService.update(savedTransaction)
+                }
+                await loadTransactions()
+            } catch {
+                if transaction == nil {
+                    transactions.removeAll { $0.id == savedTransaction.id }
+                } else if let original = transaction,
+                          let i = transactions.firstIndex(where: { $0.id == original.id }) {
+                    transactions[i] = original
+                }
+                presentError(error.localizedDescription)
+            }
+        }
+
+        return true
     }
     
     func delete(_ transaction: Transaction) {

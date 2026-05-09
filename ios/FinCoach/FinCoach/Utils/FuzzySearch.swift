@@ -2,6 +2,8 @@
 //  FuzzySearch.swift
 //  FinCoach
 //
+//  Created by Chernokoz on 05.02.2026.
+//
 
 import Foundation
 
@@ -30,15 +32,13 @@ func levenshteinDistance(_ a: String, _ b: String) -> Int {
 }
 
 /// Returns true if `query` fuzzy-matches any word in `text`.
-/// Falls back to substring check first (fast path), then checks each word
-/// with a tolerance that scales with query length.
+/// Falls back to substring check first (fast path), then checks each word with a tolerance that scales with query length.
 func fuzzyMatches(query: String, in text: String) -> Bool {
     let q = query.lowercased()
     let t = text.lowercased()
 
     if t.contains(q) { return true }
 
-    // Don't apply fuzzy logic to very short queries — too noisy
     guard q.count >= 3 else { return false }
 
     let threshold: Int = q.count <= 4 ? 1 : 2

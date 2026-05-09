@@ -87,12 +87,7 @@ struct TransactionEditorView: View {
                         let normalized   = amountText.fcNormalizedAmountText
                         let amountParsed = Double(normalized)
 
-                        print("[FinCoach][Editor] Save pressed | title='\(titleValue)' raw='\(amountText)' normalized='\(normalized)' parsed=\(String(describing: amountParsed))")
-
-                        guard let amount = amountParsed, amount > 0 else {
-                            print("[FinCoach][Editor] amount invalid — skipping")
-                            return
-                        }
+                        guard let amount = amountParsed, amount > 0 else { return }
 
                         let draft = TransactionDraft(
                             title: titleValue,
@@ -102,12 +97,8 @@ struct TransactionEditorView: View {
                             date: date
                         )
 
-                        print("[FinCoach][Editor] draft ready | amount=\(draft.amount) isIncome=\(draft.isIncome)")
-
                         Task { @MainActor in
-                            let saved = await onSave(draft)
-                            print("[FinCoach][Editor] onSave result=\(saved)")
-                            if saved { dismiss() }
+                            if await onSave(draft) { dismiss() }
                         }
                     } label: {
                         if isSaving {

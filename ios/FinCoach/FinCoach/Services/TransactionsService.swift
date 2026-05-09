@@ -11,7 +11,7 @@ import FirebaseFirestore
 final class TransactionsService {
     private let db = Firestore.firestore()
     private let collectionName = "transactions"
-    
+
     func fetchTransactions(userId: String) async throws -> [Transaction] {
         let snapshot = try await db.collection(collectionName)
             .whereField("userId", isEqualTo: userId)
@@ -24,19 +24,19 @@ final class TransactionsService {
                 .prefix(200)
         )
     }
-    
+
     func create(_ transaction: Transaction) async throws {
         try await db.collection(collectionName)
             .document(transaction.id)
             .setData(transaction.dictionary)
     }
-    
+
     func update(_ transaction: Transaction) async throws {
         try await db.collection(collectionName)
             .document(transaction.id)
             .setData(transaction.dictionary, merge: true)
     }
-    
+
     func delete(_ transaction: Transaction) async throws {
         try await db.collection(collectionName)
             .document(transaction.id)
