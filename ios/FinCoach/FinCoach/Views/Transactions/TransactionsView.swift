@@ -168,12 +168,12 @@ struct TransactionsView: View {
             HStack(spacing: 16) {
                 OverflowMetricCard(
                     title: "Расходы",
-                    amount: viewModel.monthExpense,
+                    amount: viewModel.filteredExpense,
                     imageName: "money"
                 )
                 OverflowMetricCard(
                     title: "Доходы",
-                    amount: viewModel.monthIncome,
+                    amount: viewModel.filteredIncome,
                     imageName: "pig"
                 )
             }

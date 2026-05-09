@@ -123,21 +123,16 @@ final class TransactionsViewModel: ObservableObject {
         }
     }
     
-    var monthIncome: Double {
-        currentMonthTransactions
+    var filteredIncome: Double {
+        filteredTransactions
             .filter(\.isIncome)
             .reduce(0) { $0 + $1.amount }
     }
-    
-    var monthExpense: Double {
-        currentMonthTransactions
+
+    var filteredExpense: Double {
+        filteredTransactions
             .filter { !$0.isIncome }
             .reduce(0) { $0 + $1.amount }
-    }
-    
-    private var currentMonthTransactions: [Transaction] {
-        let calendar = Calendar.current
-        return transactions.filter { calendar.isDate($0.date, equalTo: Date(), toGranularity: .month) }
     }
     
     func start(userId: String) {
