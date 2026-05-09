@@ -19,7 +19,6 @@ struct TransactionsView: View {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        header
                         searchAndFilter
                         balanceCard
                         transactionsList
@@ -45,7 +44,8 @@ struct TransactionsView: View {
                 .padding(.trailing, 24)
                 .padding(.bottom, 24)
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Transactions")
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if let userId = authViewModel.currentUser?.uid {
                     viewModel.start(userId: userId)
@@ -74,36 +74,6 @@ struct TransactionsView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "Произошла ошибка")
             }
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading) {
-            HStack {
-                AppIcons.logoLightGreen
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Transactions")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(AppColors.blackTextColor)
-                }
-
-                Spacer()
-
-                Circle()
-                    .fill(AppColors.lightGreenFrameColor.opacity(0.5))
-                    .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: "person")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(AppColors.whiteFrameColor)
-                    )
-            }
-            Text("Track, manage and grow your money")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(AppColors.grayTextColor)
         }
     }
 
@@ -211,20 +181,7 @@ struct TransactionsView: View {
             .padding(.top, 8)
             .padding(.bottom, 10)
         }
-        .background(
-            LinearGradient(
-                colors: [
-                    AppColors.lightGreenFrameColor.opacity(0.12),
-                    AppColors.whiteFrameColor
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(AppColors.lightGreenFrameColor.opacity(0.45), lineWidth: 1)
-        )
+        .background(AppColors.lightGreenFrameColor)
         .cornerRadius(22)
         .clipped(antialiased: false)
     }

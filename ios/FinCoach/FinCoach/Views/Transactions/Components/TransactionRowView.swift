@@ -15,12 +15,12 @@ struct TransactionRowView: View {
     var body: some View {
         HStack(spacing: 16) {
             Circle()
-                .fill(iconColor.opacity(0.2))
-                .frame(width: 48, height: 48)
+                .fill(AppColors.lightGreenFrameColor.opacity(0.7))
+                .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: iconName)
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(iconColor)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.darkGrayFrameColor)
                 )
 
             VStack(alignment: .leading, spacing: 7) {
@@ -59,8 +59,39 @@ struct TransactionRowView: View {
         .padding(.vertical, 16)
     }
 
-    private var iconColor: Color {
-        transaction.isIncome ? AppColors.lightGreenFrameColor : AppColors.purpleFrameColor
+    private var emoji: String {
+        switch iconName {
+        case "cart":                        return "🛒"
+        case "car":                         return "🚗"
+        case "cup.and.saucer":              return "☕️"
+        case "creditcard":                  return "💳"
+        case "wallet.pass":                 return "💰"
+        case "house", "house.fill":         return "🏠"
+        case "bag":                         return "🛍️"
+        case "fork.knife":                  return "🍽️"
+        case "pawprint":                    return "🐾"
+        case "heart":                       return "❤️"
+        case "gift":                        return "🎁"
+        case "briefcase":                   return "💼"
+        case "laptopcomputer",
+             "desktopcomputer":             return "💻"
+        case "film":                        return "🎬"
+        case "bus", "tram":                 return "🚌"
+        case "person.2":                    return "👪"
+        case "tshirt":                      return "👕"
+        case "chart.line.uptrend.xyaxis":   return "📈"
+        case "percent":                     return "💹"
+        case "airplane":                    return "✈️"
+        case "bolt":                        return "⚡️"
+        case "sparkles":                    return "✨"
+        case "wrench.and.screwdriver":      return "🔧"
+        case "graduationcap":               return "🎓"
+        case "figure.run":                  return "🏃"
+        case "cross.case":                  return "💊"
+        case "tag":                         return "🏷️"
+        case "ellipsis.circle":             return "🔘"
+        default:                            return transaction.isIncome ? "💰" : "💳"
+        }
     }
 
     private var amountText: String {
