@@ -3,9 +3,11 @@ package com.example.fincoach
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -22,14 +24,20 @@ import com.example.fincoach.ui.screens.transactions.TransactionHistoryScreen
 import com.example.fincoach.ui.screens.transactions.TransactionsScreen
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.FinCoachTheme
+import com.example.fincoach.viewmodel.SettingsViewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 class MainActivity : ComponentActivity() {
+
+    private val settingsViewModel: SettingsViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            FinCoachTheme {
+            val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+
+            FinCoachTheme(darkTheme = isDarkTheme) {
                 FinCoachApp()
             }
         }
@@ -38,9 +46,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun FinCoachApp() {
-    val navController = rememberNavController()
+    val navController     = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentRoute      = navBackStackEntry?.destination?.route
 
     val bottomBarRoutes = setOf("transactions", "goals", "analytics", "assistant", "settings")
 
@@ -112,7 +120,6 @@ fun FinCoachApp() {
                     onSuccess = { navController.popBackStack() }
                 )
             }
-            // История доступна только из TransactionsScreen
             composable("history") {
                 TransactionHistoryScreen(onBack = { navController.popBackStack() })
             }
