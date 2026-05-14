@@ -56,15 +56,66 @@ class TransactionViewModel : ViewModel() {
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Поиск и Тип фильтра
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
+    // 0 - Все, 1 - Доходы, 2 - Расходы
+    private val _typeFilter = MutableStateFlow(0)
+    val typeFilter = _typeFilter.asStateFlow()
+
     val filteredTransactions: StateFlow<List<Transaction>> = combine(
-        allTransactions, _startDate, _endDate
-    ) { transactions, start, end ->
-        if (start == null || end == null) transactions
-        else {
-            val endOfDay = end + 86399999L
-            transactions.filter { it.timestamp in start..endOfDay }
+        allTransactions, _startDate, _endDate, _searchQuery, _typeFilter
+    ) { transactions, start, end, query, type ->
+        transactions.filter { tx ->
+            // 1. Фильтр по дате и типу (оставляем как было)
+            val dateMatch = if (start == null || end == null) true else tx.timestamp in start..(end + 86399999L)
+            val typeMatch = when (type) { 1 -> tx.isIncome; 2 -> !tx.isIncome; else -> true }
+
+            // 2. Улучшенный поиск (Fuzzy Search)
+            val searchMatch = if (query.isBlank()) true else {
+                val wordsInTx = (tx.title + " " + tx.categoryTitle).split(" ")
+
+                // Проверяем каждое слово транзакции на сходство с запросом
+                wordsInTx.any { word ->
+                    // Обычное вхождение (для скорости)
+                    if (word.contains(query, ignoreCase = true)) return@any true
+
+                    // Если не нашли точно, считаем расстояние Левенштейна
+                    val distance = levenshteinDistance(query.lowercase(), word.lowercase())
+
+                    // Порог: разрешаем 1 ошибку на каждые 4 символа
+                    val threshold = if (query.length > 4) 2 else 1
+                    distance <= threshold
+                }
+            }
+
+            dateMatch && typeMatch && searchMatch
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    //Алгоритм Левенштейна для поиска с опечатками
+
+    private fun levenshteinDistance(s1: String, s2: String): Int {
+        val len1 = s1.length
+        val len2 = s2.length
+        val dp = Array(len1 + 1) { IntArray(len2 + 1) }
+
+        for (i in 0..len1) dp[i][0] = i
+        for (j in 0..len2) dp[0][j] = j
+
+        for (i in 1..len1) {
+            for (j in 1..len2) {
+                val cost = if (s1[i - 1].lowercaseChar() == s2[j - 1].lowercaseChar()) 0 else 1
+                dp[i][j] = minOf(
+                    dp[i - 1][j] + 1,        // удаление
+                    dp[i][j - 1] + 1,        // вставка
+                    dp[i - 1][j - 1] + cost  // замена
+                )
+            }
+        }
+        return dp[len1][len2]
+    }
 
     val recentTransactions: StateFlow<List<Transaction>> = allTransactions
         .map { it.take(5) }
@@ -157,10 +208,22 @@ class TransactionViewModel : ViewModel() {
         _endDate.value   = null
     }
 
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun setTypeFilter(type: Int) {
+        _typeFilter.value = type
+    }
+
     fun getCategoryTitle(categoryId: String): String =
         categories.value.find { it.id == categoryId }?.title ?: "Без категории"
 
     fun clearError()   { _error.value = null }
     fun clearSuccess() { _successMessage.value = null }
-    fun clearFilter()  = clearDateFilter()
-}
+    fun clearFilter() {
+        _startDate.value = null
+        _endDate.value = null
+        _searchQuery.value = ""
+        _typeFilter.value = 0
+    }}
