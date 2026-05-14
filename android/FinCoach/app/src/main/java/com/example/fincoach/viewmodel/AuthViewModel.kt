@@ -1,4 +1,4 @@
-package com.example.fincoach.ui.screens.auth
+package com.example.fincoach.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

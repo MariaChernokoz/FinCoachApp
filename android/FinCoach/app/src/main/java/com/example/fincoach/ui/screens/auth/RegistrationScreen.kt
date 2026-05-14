@@ -56,7 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fincoach.ui.screens.auth.AuthViewModel
+import com.example.fincoach.viewmodel.AuthViewModel
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.BorderGray
 import com.example.fincoach.ui.theme.BrightGreen
@@ -242,8 +242,10 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
                         textColor = Color.Black,
                         showBorder = true,
                         onClick = {
-                            // Просто выводим сообщение в логи вместо запуска окна
-                            println("Google Login clicked: заглушка")
+                            // Выходим из предыдущего аккаунта Google чтобы показать выбор аккаунта
+                            googleSignInClient.signOut().addOnCompleteListener {
+                                launcher.launch(googleSignInClient.signInIntent)
+                            }
                         }
                     )
                 }
