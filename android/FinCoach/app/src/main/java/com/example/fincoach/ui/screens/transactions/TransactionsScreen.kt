@@ -59,6 +59,8 @@ fun TransactionsScreen(
     val totalExpense by vm.totalExpense.collectAsState()
     val recentTxs    by vm.recentTransactions.collectAsState()
 
+    val limitedTxs = recentTxs.take(7)
+
     Column(modifier = Modifier.fillMaxSize().background(BgLightGray)) {
         FinCoachTopBar(title = "Мои финансы", actionIcon = Icons.Default.Add, onActionClick = onNavigateToAdd)
 
@@ -92,7 +94,7 @@ fun TransactionsScreen(
                 Text("Все →", color = DeepGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { onNavigateToHistory() })
             }
 
-            if (recentTxs.isEmpty()) {
+            if (limitedTxs.isEmpty()) {
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -104,9 +106,9 @@ fun TransactionsScreen(
             } else {
                 Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
                     Column {
-                        recentTxs.forEachIndexed { index, tx ->
+                        limitedTxs.forEachIndexed { index, tx ->
                             TransactionRow(tx)
-                            if (index < recentTxs.lastIndex) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
+                            if (index < limitedTxs.lastIndex) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
                         }
                     }
                 }
@@ -135,6 +137,12 @@ private fun TransactionRow(tx: Transaction) {
             Text(tx.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextBlack)
             Text(tx.categoryTitle, color = TextGray, fontSize = 12.sp)
         }
-        Text("${if (tx.isIncome) "+" else "−"} ${String.format("%,.2f", tx.amount)} ₽", fontWeight = FontWeight.Bold, color = if (tx.isIncome) Color(0xFF27AE60) else Color(0xFFE74C3C), fontSize = 14.sp)
+
+        Text(
+            text = "${if (tx.isIncome) "+" else "−"} ${String.format("%,.2f", tx.amount)} ₽",
+            fontWeight = FontWeight.Bold,
+            color = TextDarkGray,
+            fontSize = 14.sp
+        )
     }
 }

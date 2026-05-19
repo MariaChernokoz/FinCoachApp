@@ -118,7 +118,7 @@ class TransactionViewModel : ViewModel() {
     }
 
     val recentTransactions: StateFlow<List<Transaction>> = allTransactions
-        .map { it.take(5) }
+        .map { it.take(6) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val totalBalance: StateFlow<Double> = allTransactions

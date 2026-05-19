@@ -96,6 +96,27 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    fun resetPassword(email: String) {
+        if (email.isEmpty()) {
+            _errorMessage.value = "Введите email"
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                auth.sendPasswordResetEmail(email).await()
+
+                // Передаем сообщение об успехе в errorMessage, чтобы экран показал Toast
+                _errorMessage.value = "Письмо для восстановления отправлено на $email"
+            } catch (e: Exception) {
+                _errorMessage.value = e.localizedMessage ?: "Ошибка восстановления пароля"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     // Google Sign-In
 
     fun signInWithGoogle(idToken: String) {
