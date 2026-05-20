@@ -18,7 +18,7 @@ struct AnalyticsView: View {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        header
+                        // header
                         PeriodSelectorView(selected: $viewModel.period)
                         AnalyticsSummaryCards(viewModel: viewModel)
 
@@ -93,7 +93,10 @@ struct AnalyticsView: View {
             }
             .sheet(isPresented: $showAllCategories) {
                 CategoryDetailView(
-                    breakdown: viewModel.categoryBreakdown,
+                    allBreakdown: viewModel.categoryBreakdown,
+                    excludedCategories: viewModel.excludedChartCategories,
+                    onToggle: { viewModel.toggleChartCategory($0) },
+                    onReset: { viewModel.excludedChartCategories = [] },
                     total: viewModel.periodExpense
                 )
             }

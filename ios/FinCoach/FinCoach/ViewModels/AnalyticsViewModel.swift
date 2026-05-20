@@ -291,17 +291,17 @@ final class AnalyticsViewModel: ObservableObject {
     }
 
     static let palette: [Color] = [
-        AppColors.lightGreenFrameColor,
-        AppColors.purpleFrameColor,
-        .blue,
-        .orange,
-        .red,
-        .cyan,
-        .indigo,
-        .pink,
-        .brown,
-        .teal,
-        .mint,
-        Color(.systemYellow)
+        Color(red: 0.35, green: 0.47, blue: 0.88),
+        Color(red: 0.94, green: 0.38, blue: 0.31),
+        Color(red: 0.96, green: 0.72, blue: 0.25),
+        Color(red: 0.87, green: 0.36, blue: 0.62),
+        Color(red: 0.52, green: 0.38, blue: 0.82),
+        Color(red: 0.25, green: 0.72, blue: 0.86),
+        Color(red: 0.93, green: 0.57, blue: 0.22),
+        Color(red: 0.85, green: 0.33, blue: 0.43),
+        Color(red: 0.60, green: 0.45, blue: 0.90),
+        Color(red: 0.30, green: 0.62, blue: 0.92),
+        Color(red: 0.42, green: 0.82, blue: 0.72),
+        Color(red: 0.95, green: 0.60, blue: 0.40),
     ]
 }

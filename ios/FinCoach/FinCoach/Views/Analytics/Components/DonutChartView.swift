@@ -7,8 +7,8 @@ import SwiftUI
 import Charts
 
 struct DonutChartView: View {
-    let allBreakdown: [CategorySpending]       // все категории — для легенды
-    let chartBreakdown: [CategorySpending]     // отфильтрованные — для диаграммы
+    let allBreakdown: [CategorySpending]
+    let chartBreakdown: [CategorySpending]
     let excludedCategories: Set<String>
     let onToggle: (String) -> Void
     let onReset: () -> Void
@@ -64,30 +64,37 @@ struct DonutChartView: View {
                 }
             }
 
-            VStack(spacing: 12) {
-                ForEach(visibleLegendItems) { item in
+            VStack(spacing: 0) {
+                ForEach(Array(visibleLegendItems.enumerated()), id: \.element.id) { index, item in
                     let excluded = excludedCategories.contains(item.category)
+
                     legendRow(item, excluded: excluded)
-                        .opacity(excluded ? 0.35 : 1)
-                        .onTapGesture { onToggle(item.category) }
+                        .opacity(excluded ? 0.38 : 1)
+                        .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { onToggle(item.category) } }
+
+                    if index < visibleLegendItems.count - 1 {
+                        Divider()
+                    }
                 }
 
                 if hasMore {
+                    Divider()
                     Button(action: onShowAll) {
                         HStack(spacing: 4) {
                             Text("Все категории")
-                                .font(.system(size: 14, weight: .medium))
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .medium))
+                                .font(.system(size: 11, weight: .semibold))
                         }
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(AppColors.lightGreenFrameColor)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                     }
-                    .padding(.top, 2)
                 }
             }
 
             if hasFilter {
-                Text("Нажмите на категорию чтобы включить/исключить")
+                Text("Нажмите на категорию чтобы включить / исключить")
                     .font(.system(size: 11))
                     .foregroundColor(AppColors.grayTextColor)
             } else {
@@ -129,6 +136,7 @@ struct DonutChartView: View {
                     .frame(minWidth: 80, alignment: .trailing)
             }
         }
+        .padding(.vertical, 10)
         .contentShape(Rectangle())
     }
 

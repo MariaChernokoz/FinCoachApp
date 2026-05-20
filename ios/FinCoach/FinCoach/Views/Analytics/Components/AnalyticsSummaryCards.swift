@@ -14,12 +14,12 @@ struct AnalyticsSummaryCards: View {
             HStack(spacing: 10) {
                 card(title: "Доходы",     amount: viewModel.periodIncome,        color: AppColors.lightGreenFrameColor)
                 card(title: "Расходы",    amount: viewModel.periodExpense,        color: AppColors.blackTextColor)
-                card(title: "Ср. в день", amount: viewModel.averageDailyExpense,  color: AppColors.grayTextColor)
+                card(title: "Среднее в день", amount: viewModel.averageDailyExpense,  color: AppColors.grayTextColor)
             }
 
-            if let rate = viewModel.savingsRate {
-                savingsBanner(rate: rate)
-            }
+            // if let rate = viewModel.savingsRate {
+            //     savingsBanner(rate: rate)
+            // }
         }
     }
 
@@ -58,10 +58,10 @@ struct AnalyticsSummaryCards: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(AppColors.lightGreenFrameColor.opacity(0.15))
+        .background(AppColors.lightGreenFrameColor)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.lightGreenFrameColor.opacity(0.35), lineWidth: 1)
+                .stroke(AppColors.lightGreenFrameColor, lineWidth: 1)
         )
         .cornerRadius(12)
     }
