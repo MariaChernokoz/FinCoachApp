@@ -10,6 +10,9 @@
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const axios = require("axios");
+const https = require("https");
+
+const sberAgent = new https.Agent({ rejectUnauthorized: false });
 
 setGlobalOptions({ region: "us-central1", maxInstances: 10 });
 
@@ -32,13 +35,14 @@ async function getGigaToken() {
             method: 'post',
             maxBodyLength: Infinity,
             url: 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth',
-            headers: { 
-                'Content-Type': 'application/x-www-form-urlencoded', 
-                'Accept': 'application/json', 
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',
                 'RqUID': '6f0b1293-2713-4fd3-90d5-b04963595678',
                 'Authorization': `Basic ${AUTH_KEY}`
             },
-            data: data
+            data: data,
+            httpsAgent: sberAgent
         };
 
         const response = await axios.request(config);
@@ -49,11 +53,7 @@ async function getGigaToken() {
     }
 }
 
-exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
-    if (!request.auth) {
-        throw new HttpsError('unauthenticated', 'Необходимо войти в аккаунт');
-    }
-
+exports.analyzeFinances = onCall({ maxInstances: 10, invoker: "public" }, async (request) => {
     const userTransactions = request.data.transactions || [];
     const userQuestion = request.data.question;
 
@@ -75,16 +75,17 @@ exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
         const config = {
             method: 'post',
             url: 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Accept': 'application/json', 
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             data: {
                 model: "GigaChat",
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.7
-            }
+            },
+            httpsAgent: sberAgent
         };
 
         const response = await axios.request(config);
