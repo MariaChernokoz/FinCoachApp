@@ -30,11 +30,8 @@ final class AIAssistantViewModel: ObservableObject {
         let userMessage = ChatMessage(text: text, isUser: true)
         messages.append(userMessage)
         
-        let transactions = TransactionsMockService.shared.getMockTransactions().map { $0.dictionary }
-        
         let data: [String: Any] = [
-            "question": text,
-            "transactions": transactions
+            "message": text
         ]
         
         isLoading = true
@@ -87,7 +84,9 @@ final class AIAssistantViewModel: ObservableObject {
             case .unauthenticated:
                 message = "Необходимо войти в аккаунт"
             case .invalidArgument:
-                message = "Некорректный вопрос"
+                message = "Сообщение слишком длинное или пустое"
+            case .resourceExhausted:
+                message = "Подождите несколько секунд перед следующим вопросом"
             case .internal:
                 message = "Внутренняя ошибка сервера"
             default:
