@@ -10,7 +10,7 @@ import SwiftUI
 import FirebaseFunctions
 import Combine
 
-class AIAssistantViewModel: ObservableObject {
+final class AIAssistantViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -20,9 +20,6 @@ class AIAssistantViewModel: ObservableObject {
 
     init() {
         loadChatHistory()
-        #if DEBUG
-        functions.useEmulator(withHost: "127.0.0.1", port: 5001)
-        #endif
     }
     
     func sendMessage(_ text: String) {
@@ -33,7 +30,7 @@ class AIAssistantViewModel: ObservableObject {
         let userMessage = ChatMessage(text: text, isUser: true)
         messages.append(userMessage)
         
-        let transactions = TransactionsService.shared.getMockTransactions().map { $0.dictionary }
+        let transactions = TransactionsMockService.shared.getMockTransactions().map { $0.dictionary }
         
         let data: [String: Any] = [
             "question": text,

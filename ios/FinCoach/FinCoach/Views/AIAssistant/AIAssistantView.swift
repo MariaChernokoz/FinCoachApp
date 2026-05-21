@@ -9,14 +9,20 @@ import SwiftUI
 
 struct AIAssistantView: View {
     @StateObject private var viewModel = AIAssistantViewModel()
+    @EnvironmentObject private var navigationState: AppNavigationState
     @State private var messageText = ""
     @FocusState private var isInputFocused: Bool
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                QuoteOfTheDayView()
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+
                 // MARK: - Chat Messages
-                
+
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 16) {
@@ -81,8 +87,13 @@ struct AIAssistantView: View {
                 .padding(.vertical, 8)
                 .background(Color(.systemBackground))
             }
-            .navigationTitle("AI Коуч")
+            .navigationTitle("Финансовый ассистент")
             .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: navigationState.pendingAIMessage) { message in
+                guard let message else { return }
+                navigationState.pendingAIMessage = nil
+                viewModel.sendMessage(message)
+            }
             .alert("Ошибка", isPresented: $viewModel.showError) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -222,4 +233,5 @@ struct ExampleQuestionsView: View {
 
 #Preview {
     AIAssistantView()
+        .environmentObject(AppNavigationState())
 }

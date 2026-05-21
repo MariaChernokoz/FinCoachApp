@@ -6,29 +6,43 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Set of Material typography styles to start with
 val Typography = Typography(
+    // Заголовок "Welcome to FinCoach AI!"
+    headlineMedium = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        letterSpacing = 0.5.sp,
+        color = White // Белый на зеленом фоне
+    ),
+    // Подзаголовок "Your personal finance coach"
+    titleMedium = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Medium,
+        fontSize = 17.sp,
+        color = White.copy(alpha = 0.9f)
+    ),
+    // Основной текст (например, в полях ввода)
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    )
-    /* Other default text styles to override
-    titleLarge = TextStyle(
+        fontSize = 17.sp,
+        letterSpacing = 0.5.sp,
+        color = TextBlack // Используем #000000 из палитры
+    ),
+    // Вспомогательный текст (плейсхолдеры, "Забыли пароль?")
+    bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
+        fontSize = 16.sp,
+        color = TextGray // Используем #7C7C7C из палитры
     ),
-    labelSmall = TextStyle(
+    // Текст на кнопках
+    labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        letterSpacing = 1.sp,
+        color = White
     )
-    */
 )

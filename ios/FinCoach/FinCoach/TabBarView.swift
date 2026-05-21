@@ -8,33 +8,44 @@
 import SwiftUI
 
 struct TabBarView: View {
+    @StateObject private var networkMonitor = NetworkMonitor()
+    @EnvironmentObject private var navigationState: AppNavigationState
+
     var body: some View {
-        TabView {
-            AnalyticsView()
-                .tabItem {
-                    AppIcons.analyticsIcon
+        ZStack(alignment: .top) {
+            TabView(selection: $navigationState.selectedTab) {
+                AnalyticsView()
+                    .tabItem { AppIcons.analyticsIcon }
+                    .tag(0)
+
+                TransactionsView()
+                    .tabItem { AppIcons.transactionsIcon }
+                    .tag(1)
+
+                AIAssistantView()
+                    .tabItem { AppIcons.AIAssistantIcon }
+                    .tag(2)
+
+                GoalsView()
+                    .tabItem { AppIcons.goalsIcon }
+                    .tag(3)
+
+                SettingsView()
+                    .tabItem { AppIcons.settingsIcon }
+                    .tag(4)
+            }
+
+            if !networkMonitor.isConnected {
+                VStack {
+                    OfflineBannerView()
+                        .padding(.top, 12)
+                    Spacer()
                 }
-            
-            TransactionsView()
-                .tabItem {
-                    AppIcons.transactionsIcon
-                }
-            
-            AIAssistantView()
-                .tabItem {
-                    AppIcons.AIAssistantIcon
-                }
-            
-            GoalsView()
-                .tabItem {
-                    AppIcons.goalsIcon
-                }
-            
-            SettingsView()
-                .tabItem {
-                    AppIcons.settingsIcon
-                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(1)
+            }
         }
+        .animation(.easeInOut(duration: 0.35), value: networkMonitor.isConnected)
     }
 }
 
