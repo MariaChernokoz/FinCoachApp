@@ -111,15 +111,15 @@ async function getExpenseContext(userId) {
         };
     }
 
-    // Fallback: ограничиваем выборку чтобы не раздувать контекст GigaChat
-    const monthAgo = new Date();
-    monthAgo.setDate(monthAgo.getDate() - 30);
-    const monthAgoISO = monthAgo.toISOString();
+    // Fallback: транзакции хранятся в глобальной коллекции "transactions",
+    // фильтруем по userId. Дата — timestamp в миллисекундах (Int64).
+    const monthAgoMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-    const txSnap = await db.collection(`users/${userId}/transactions`)
-        .where("date", ">=", monthAgoISO)
-        .where("type", "==", "expense")
-        .orderBy("date", "desc")
+    const txSnap = await db.collection("transactions")
+        .where("userId", "==", userId)
+        .where("isIncome", "==", false)
+        .where("timestamp", ">=", monthAgoMs)
+        .orderBy("timestamp", "desc")
         .limit(50)
         .get();
 
