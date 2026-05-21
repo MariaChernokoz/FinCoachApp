@@ -10,12 +10,14 @@ import FirebaseAuth
 
 struct ContentView: View {
     @StateObject private var authViewModel = AuthViewModel()
-    
+    @StateObject private var navigationState = AppNavigationState()
+
     var body: some View {
         Group {
             if authViewModel.isAuthenticated {
                 TabBarView()
                     .environmentObject(authViewModel)
+                    .environmentObject(navigationState)
             } else {
                 AuthView()
                     .environmentObject(authViewModel)
