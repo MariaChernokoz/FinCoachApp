@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum TransactionType: String, CaseIterable, Identifiable, Codable {
+enum TransactionType: String, CaseIterable, Identifiable, Codable, Hashable {
     case expense
     case income
     
@@ -23,7 +23,7 @@ enum TransactionType: String, CaseIterable, Identifiable, Codable {
     }
 }
 
-struct Category: Identifiable, Codable, Equatable {
+struct Category: Identifiable, Codable, Equatable, Hashable {
     var id: String
     var title: String
     var type: TransactionType

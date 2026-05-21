@@ -9,24 +9,30 @@ import SwiftUI
 
 struct TabBarView: View {
     @StateObject private var networkMonitor = NetworkMonitor()
+    @EnvironmentObject private var navigationState: AppNavigationState
 
     var body: some View {
         ZStack(alignment: .top) {
-            TabView {
+            TabView(selection: $navigationState.selectedTab) {
                 AnalyticsView()
                     .tabItem { AppIcons.analyticsIcon }
+                    .tag(0)
 
                 TransactionsView()
                     .tabItem { AppIcons.transactionsIcon }
+                    .tag(1)
 
                 AIAssistantView()
                     .tabItem { AppIcons.AIAssistantIcon }
+                    .tag(2)
 
                 GoalsView()
                     .tabItem { AppIcons.goalsIcon }
+                    .tag(3)
 
                 SettingsView()
                     .tabItem { AppIcons.settingsIcon }
+                    .tag(4)
             }
 
             if !networkMonitor.isConnected {
