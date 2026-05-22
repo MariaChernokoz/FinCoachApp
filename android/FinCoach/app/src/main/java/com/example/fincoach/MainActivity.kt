@@ -3,9 +3,11 @@ package com.example.fincoach
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -15,21 +17,27 @@ import androidx.navigation.compose.rememberNavController
 import com.example.fincoach.ui.FinCoachBottomBar
 import com.example.fincoach.ui.screens.analytics.AnalyticsScreen
 import com.example.fincoach.ui.screens.assistant.AssistantScreen
+import com.example.fincoach.ui.screens.goals.GoalsScreen
 import com.example.fincoach.ui.screens.settings.SettingsScreen
 import com.example.fincoach.ui.screens.transactions.AddTransactionScreen
 import com.example.fincoach.ui.screens.transactions.TransactionHistoryScreen
 import com.example.fincoach.ui.screens.transactions.TransactionsScreen
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.FinCoachTheme
+import com.example.fincoach.viewmodel.SettingsViewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
 class MainActivity : ComponentActivity() {
+
+    private val settingsViewModel: SettingsViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // enableEdgeToEdge() убран — он вызывал полоску системной навигации
         setContent {
-            FinCoachTheme {
+            val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+
+            FinCoachTheme(darkTheme = isDarkTheme) {
                 FinCoachApp()
             }
         }
@@ -38,11 +46,11 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun FinCoachApp() {
-    val navController = rememberNavController()
+    val navController     = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentRoute      = navBackStackEntry?.destination?.route
 
-    val bottomBarRoutes = setOf("transactions", "history", "analytics", "assistant", "settings")
+    val bottomBarRoutes = setOf("transactions", "goals", "analytics", "assistant", "settings")
 
     Scaffold(
         containerColor = BgLightGray,
@@ -50,7 +58,7 @@ fun FinCoachApp() {
             if (currentRoute in bottomBarRoutes) {
                 FinCoachBottomBar(
                     activeTab = when (currentRoute) {
-                        "history"      -> 0
+                        "goals"        -> 0
                         "transactions" -> 1
                         "analytics"    -> 2
                         "assistant"    -> 3
@@ -89,11 +97,14 @@ fun FinCoachApp() {
                     onNavigateToSettings = { navController.navigate("settings") }
                 )
             }
-            composable("history") {
-                TransactionHistoryScreen(onBack = { navController.popBackStack() })
+            composable("goals") {
+                GoalsScreen()
             }
             composable("analytics") {
                 AnalyticsScreen()
+            }
+            composable("assistant") {
+                AssistantScreen()
             }
             composable("settings") {
                 SettingsScreen(
@@ -109,8 +120,8 @@ fun FinCoachApp() {
                     onSuccess = { navController.popBackStack() }
                 )
             }
-            composable("assistant") {
-                AssistantScreen()
+            composable("history") {
+                TransactionHistoryScreen(onBack = { navController.popBackStack() })
             }
         }
     }

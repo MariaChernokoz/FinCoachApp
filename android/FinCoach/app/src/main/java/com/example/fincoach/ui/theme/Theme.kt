@@ -11,25 +11,30 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = BrightGreen,
-    secondary = DeepGreen,
-    tertiary = PurpleAccent,
-    background = BgLightGray,  // было DeepGreen
-    surface = White
+    primary              = BrightGreen,
+    secondary            = DeepGreen,
+    tertiary             = PurpleAccent,
+    background           = NearBlack,
+    surface              = DarkSurface,
+    onBackground         = White,
+    onSurface            = White,
+    onSurfaceVariant     = DarkTextGray
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = BrightGreen,
-    secondary = DeepGreen,
-    tertiary = PurpleAccent,
-    background = BgLightGray,  // было DeepGreen
-    surface = White
+    primary              = BrightGreen,
+    secondary            = DeepGreen,
+    tertiary             = PurpleAccent,
+    background           = BgLightGray,
+    surface              = White,
+    onBackground         = TextBlack,
+    onSurface            = TextBlack,
+    onSurfaceVariant     = TextGray
 )
 
 @Composable
 fun FinCoachTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -37,13 +42,13 @@ fun FinCoachTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         val window = (view.context as Activity).window
-        window.statusBarColor = BgLightGray.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+        window.statusBarColor = colorScheme.background.toArgb()
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
-        content = content
+        typography  = Typography,
+        content     = content
     )
 }

@@ -55,10 +55,11 @@ class UserRepository {
     }
 
     suspend fun updateBalance(newBalance: Double) {
-        userDoc().update("totalBalance", newBalance).await()
+        // без await() — чтобы работало в офлайне, запись уйдёт в кеш и синхронизируется потом
+        userDoc().update("totalBalance", newBalance)
     }
 
     suspend fun updateCurrency(currency: String) {
-        userDoc().update("currency", currency).await()
+        userDoc().update("currency", currency)
     }
 }

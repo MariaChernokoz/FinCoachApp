@@ -8,7 +8,6 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
 
 class TransactionRepository {
 
@@ -50,13 +49,18 @@ class TransactionRepository {
             "amount"        to transaction.amount,
             "categoryId"    to transaction.categoryId,
             "categoryTitle" to transaction.categoryTitle,
+            "category"      to transaction.categoryTitle,  // дубль для ИИ-ассистента — он читает поле "category"
             "isIncome"      to transaction.isIncome,
             "timestamp"     to transaction.timestamp
         )
-        return col().add(data).await().id
+        // document() сразу даёт ссылку с локальным id, set() кладёт запись в кеш.
+        // await() здесь нельзя — иначе в офлайне будет вечная загрузка
+        val doc = col().document()
+        doc.set(data)
+        return doc.id
     }
 
     suspend fun deleteTransaction(id: String) {
-        col().document(id).delete().await()
+        col().document(id).delete()
     }
 }

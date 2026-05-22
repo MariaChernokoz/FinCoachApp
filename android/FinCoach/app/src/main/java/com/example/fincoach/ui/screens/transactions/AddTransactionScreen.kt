@@ -139,6 +139,34 @@ fun AddTransactionScreen(
                     containerColor = DeepGreen
                 )
             )
+        },
+        // Закрепляем кнопку в самом низу экрана вне зоны прокрутки
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(BgLightGray)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        vm.addTransaction(title, amountText.toDoubleOrNull() ?: 0.0, selectedCategory?.id ?: "", isIncome, selectedDate)
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DeepGreen,
+                        disabledContainerColor = DeepGreen.copy(alpha = 0.5f)
+                    )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("СОХРАНИТЬ", fontWeight = FontWeight.Bold, color = White, fontSize = 16.sp)
+                    }
+                }
+            }
         }
     ) { paddingValues ->
         Column(
@@ -147,8 +175,8 @@ fun AddTransactionScreen(
                 .padding(paddingValues)
                 .background(BgLightGray)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Тип операции
             Card(
@@ -254,20 +282,6 @@ fun AddTransactionScreen(
                     if (row.size < 3) Spacer(Modifier.weight((3 - row.size).toFloat()))
                 }
             }
-
-            // Кнопка сохранения
-            Button(
-                onClick = {
-                    vm.addTransaction(title, amountText.toDoubleOrNull() ?: 0.0, selectedCategory?.id ?: "", isIncome, selectedDate)
-                },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = DeepGreen)
-            ) {
-                if (isLoading) CircularProgressIndicator(color = White, modifier = Modifier.size(24.dp))
-                else Text("СОХРАНИТЬ", fontWeight = FontWeight.Bold)
-            }
         }
     }
 
@@ -280,7 +294,7 @@ fun AddTransactionScreen(
                 TextButton(onClick = {
                     selectedDate = datePickerState.selectedDateMillis ?: selectedDate
                     showDatePicker = false
-                }) { Text("ОК") }
+                }) { Text("ОК", color = DeepGreen, fontWeight = FontWeight.Bold) }
             }
         ) {
             DatePicker(state = datePickerState)

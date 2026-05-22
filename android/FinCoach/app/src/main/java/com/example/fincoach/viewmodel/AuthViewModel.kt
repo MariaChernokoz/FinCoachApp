@@ -1,4 +1,4 @@
-package com.example.fincoach.ui.screens.auth
+package com.example.fincoach.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -90,6 +90,27 @@ class AuthViewModel : ViewModel() {
                 _isAuthSuccess.value = true
             } catch (e: Exception) {
                 _errorMessage.value = "Неверный email или пароль"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun resetPassword(email: String) {
+        if (email.isEmpty()) {
+            _errorMessage.value = "Введите email"
+            return
+        }
+
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                auth.sendPasswordResetEmail(email).await()
+
+                // Передаем сообщение об успехе в errorMessage, чтобы экран показал Toast
+                _errorMessage.value = "Письмо для восстановления отправлено на $email"
+            } catch (e: Exception) {
+                _errorMessage.value = e.localizedMessage ?: "Ошибка восстановления пароля"
             } finally {
                 _isLoading.value = false
             }

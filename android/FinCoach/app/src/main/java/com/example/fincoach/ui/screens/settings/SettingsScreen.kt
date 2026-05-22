@@ -1,5 +1,6 @@
 package com.example.fincoach.ui.screens.settings
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -19,10 +20,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -30,11 +31,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,16 +44,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fincoach.ui.screens.auth.AuthViewModel
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.DeepGreen
 import com.example.fincoach.ui.theme.TextDarkGray
 import com.example.fincoach.ui.theme.TextGray
 import com.example.fincoach.ui.theme.White
+import com.example.fincoach.viewmodel.AuthViewModel
 
 @Composable
 fun SettingsScreen(
@@ -60,22 +62,34 @@ fun SettingsScreen(
     onLogout: () -> Unit
 ) {
     val authViewModel: AuthViewModel = viewModel()
-    val userEmail = authViewModel.getCurrentUserEmail()
-    val userName = authViewModel.getCurrentUserName()
+    val context = LocalContext.current
+
+    val userEmail   = authViewModel.getCurrentUserEmail()
+    val userName    = authViewModel.getCurrentUserName()
     val firstLetter = if (userName.isNotEmpty()) userName.take(1).uppercase() else "?"
 
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showResetPasswordDialog by remember { mutableStateOf(false) }
+    val errorMessage by authViewModel.errorMessage.collectAsState()
 
+    // Слушаем сообщения об успехе / ошибках из ViewModel
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            authViewModel.clearError()
+        }
+    }
+
+    // Диалог выхода
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             title = { Text("Выйти?") },
-            text = { Text("Вы уверены, что хотите выйти из аккаунта?") },
+            text  = { Text("Вы уверены, что хотите выйти из аккаунта?") },
             confirmButton = {
-                TextButton(onClick = {
-                    authViewModel.logout()
-                    onLogout()
-                }) { Text("Выйти", color = Color(0xFFFF5252)) }
+                TextButton(onClick = { authViewModel.logout(); onLogout() }) {
+                    Text("Выйти", color = Color(0xFFFF5252))
+                }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
@@ -85,28 +99,51 @@ fun SettingsScreen(
         )
     }
 
-    // ВАЖНО: Scaffold удален, так как он теперь в MainActivity
+    // Диалог подтверждения смены пароля
+    if (showResetPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetPasswordDialog = false },
+            title = { Text("Сброс пароля") },
+            text  = { Text("Мы отправим ссылку для создания нового пароля на вашу почту $userEmail. Продолжить?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showResetPasswordDialog = false
+                    if (userEmail.isNotEmpty() && userEmail != "Email не указан") {
+                        authViewModel.resetPassword(userEmail)
+                    } else {
+                        Toast.makeText(context, "Не удалось определить Email", Toast.LENGTH_SHORT).show()
+                    }
+                }) {
+                    Text("Отправить", color = DeepGreen, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetPasswordDialog = false }) {
+                    Text("Отмена", color = TextGray)
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BgLightGray)
             .verticalScroll(rememberScrollState())
     ) {
-        // ── Шапка с Аватаром ─────────────────────────────────────────────
+        // Шапка
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(DeepGreen)
                 .padding(top = 48.dp, bottom = 32.dp)
         ) {
-            // Кнопка назад в углу шапки
             IconButton(
                 onClick = onBack,
                 modifier = Modifier.align(Alignment.TopStart).padding(start = 8.dp)
             ) {
                 Icon(Icons.Default.ArrowBack, contentDescription = null, tint = White)
             }
-
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -127,25 +164,23 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(24.dp))
 
+        // Данные аккаунта
         SectionLabel("ДАННЫЕ АККАУНТА")
         SettingsCard {
             SettingsRow(Icons.Default.Person, "Имя пользователя", userName)
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
             SettingsRow(Icons.Default.Email, "Email", userEmail)
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        SectionLabel("НАСТРОЙКИ")
-        SettingsCard {
-            SettingsRowToggle(
-                icon = Icons.Default.Notifications,
-                label = "Уведомления",
-                checked = true,
-                onToggle = { /* TODO */ }
-            )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
-            SettingsRow(Icons.Default.Info, "Версия приложения", "1.0.0 (Release)")
+
+            // Кликабельная строка для сброса пароля
+            SettingsRowClickable(
+                icon = Icons.Default.LockReset,
+                label = "Безопасность",
+                value = "Сбросить текущий пароль",
+                onClick = {
+                    showResetPasswordDialog = true
+                }
+            )
         }
 
         Spacer(Modifier.height(32.dp))
@@ -174,7 +209,7 @@ fun SettingsScreen(
     }
 }
 
-// ── Компоненты отрисовки ──────────────────────────────────────────────────
+// Вспомогательные компоненты
 
 @Composable
 private fun SectionLabel(text: String) {
@@ -219,9 +254,17 @@ private fun SettingsRow(icon: ImageVector, label: String, value: String) {
 }
 
 @Composable
-private fun SettingsRowToggle(icon: ImageVector, label: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
+private fun SettingsRowClickable(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    onClick: () -> Unit
+) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -231,12 +274,15 @@ private fun SettingsRowToggle(icon: ImageVector, label: String, checked: Boolean
             Icon(icon, null, tint = DeepGreen, modifier = Modifier.size(20.dp))
         }
         Spacer(Modifier.width(16.dp))
-        Text(label, modifier = Modifier.weight(1f), color = TextDarkGray, fontWeight = FontWeight.Medium)
-        Switch(
-            checked = checked,
-            onCheckedChange = onToggle,
-            colors = SwitchDefaults.colors(checkedTrackColor = DeepGreen)
+        Column(Modifier.weight(1f)) {
+            Text(label, color = TextGray, fontSize = 12.sp)
+            Text(value, color = TextDarkGray, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+        }
+        Icon(
+            Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = TextGray,
+            modifier = Modifier.size(20.dp)
         )
     }
 }
-
