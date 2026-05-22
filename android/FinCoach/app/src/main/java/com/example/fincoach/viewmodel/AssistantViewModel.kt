@@ -2,40 +2,40 @@ package com.example.fincoach.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fincoach.data.model.Transaction
-import com.example.fincoach.data.repository.TransactionRepository
+import com.example.fincoach.data.model.ChatMessage
+import com.example.fincoach.data.repository.ChatRepository
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-data class ChatMessage(
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val text: String,
-    val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
-)
-
 class AssistantViewModel : ViewModel() {
 
-    private val transactionRepo = TransactionRepository()
+    private val chatRepo  = ChatRepository()
     private val functions = Firebase.functions("us-central1")
 
-    private val _messages = MutableStateFlow<List<ChatMessage>>(
-        listOf(
-            ChatMessage(
-                text = "Привет! Я ваш финансовый AI коуч. Задавайте мне вопросы о ваших тратах, целях и бюджете!",
-                isUser = false
-            )
-        )
+    // Приветствие — показываем всегда первым, в базе не храним
+    private val greeting = ChatMessage(
+        text = "Привет! Я ваш финансовый ассистент. Задавайте мне вопросы о ваших тратах, целях и бюджете!",
+        isUser = false
     )
-    val messages: StateFlow<List<ChatMessage>> = _messages.asStateFlow()
+
+    // История чата из Firestore, приветствие добавляем сверху
+    val messages: StateFlow<List<ChatMessage>> = chatRepo
+        .observeMessages()
+        .map { saved -> listOf(greeting) + saved }
+        .catch { emit(listOf(greeting)) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf(greeting))
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -43,68 +43,68 @@ class AssistantViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
-    private val transactions: StateFlow<List<Transaction>> = transactionRepo
-        .observeTransactions()
-        .catch { emit(emptyList()) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    // false на время запроса и 3 секунды после — чтобы не частить (rate limiting)
+    private val _canSend = MutableStateFlow(true)
+    val canSend: StateFlow<Boolean> = _canSend.asStateFlow()
 
     fun sendMessage(text: String) {
-        if (text.isBlank()) return
+        val message = text.trim().take(500)
+        if (message.isBlank() || !_canSend.value) return
 
-        _messages.value = _messages.value + ChatMessage(text = text, isUser = true)
+        // Cloud Function требует авторизации
+        if (Firebase.auth.currentUser == null) {
+            _error.value = "Необходимо войти в аккаунт"
+            return
+        }
 
         viewModelScope.launch {
+            _canSend.value = false
             _isLoading.value = true
             _error.value = null
 
+            // Сохраняем вопрос пользователя
+            runCatching { chatRepo.addMessage(message, isUser = true) }
+
             runCatching {
-                // Формируем список транзакций как у подруги
-                val txList = transactions.value.map { tx ->
-                    hashMapOf(
-                        "title"         to tx.title,
-                        "amount"        to tx.amount,
-                        "categoryTitle" to tx.categoryTitle,
-                        "isIncome"      to tx.isIncome,
-                        "timestamp"     to tx.timestamp
-                    )
-                }
-
-                // Данные для функции — точно такой же формат как в iOS
-                val data = hashMapOf(
-                    "question"     to text,
-                    "transactions" to txList
-                )
-
-                // Вызываем ту же Cloud Function что и подруга
+                // Сервер сам читает транзакции из Firestore — отправляем только текст
+                val data = hashMapOf("message" to message)
                 val result = functions
                     .getHttpsCallable("analyzeFinances")
                     .call(data)
                     .await()
 
-                @Suppress("UNCHECKED_CAST")
-                val resultData = result.data as? Map<String, Any>
-                val answer = resultData?.get("answer") as? String
+                val response = result.data as? Map<*, *>
+                val answer = response?.get("answer") as? String
                     ?: "Не удалось получить ответ. Попробуйте ещё раз."
 
-                _messages.value = _messages.value + ChatMessage(text = answer, isUser = false)
+                // Ответ ассистента (в том числе заглушка при success = false)
+                chatRepo.addMessage(answer, isUser = false)
 
             }.onFailure { e ->
-                val errorText = when {
-                    "unauthenticated" in (e.message ?: "").lowercase() ->
+                _error.value = when ((e as? FirebaseFunctionsException)?.code) {
+                    FirebaseFunctionsException.Code.UNAUTHENTICATED ->
                         "Необходимо войти в аккаунт"
-                    "unavailable" in (e.message ?: "").lowercase() ->
-                        "Сервер недоступен. Проверьте интернет."
+                    FirebaseFunctionsException.Code.INVALID_ARGUMENT ->
+                        "Сообщение слишком длинное (макс. 500 символов) или пустое"
+                    FirebaseFunctionsException.Code.RESOURCE_EXHAUSTED ->
+                        "Подождите несколько секунд перед следующим вопросом"
                     else ->
-                        "Произошла ошибка. Попробуйте ещё раз."
+                        "Произошла ошибка, попробуйте позже"
                 }
-                _error.value = errorText
-                _messages.value = _messages.value + ChatMessage(
-                    text = "Извините, произошла ошибка. Попробуйте ещё раз.",
-                    isUser = false
-                )
             }
 
             _isLoading.value = false
+            // Пауза 3 секунды между запросами
+            delay(3000)
+            _canSend.value = true
+        }
+    }
+
+    // Очистить переписку
+    fun clearChat() {
+        viewModelScope.launch {
+            runCatching { chatRepo.clearChat() }
+                .onFailure { _error.value = "Не удалось очистить чат" }
         }
     }
 

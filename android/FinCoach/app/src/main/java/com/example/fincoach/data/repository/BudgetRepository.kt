@@ -60,12 +60,13 @@ class BudgetRepository {
     }
 
     suspend fun updateSpent(budgetId: String, newSpent: Double) {
+        // без await() — чтобы не зависало в офлайне
         col().document(budgetId).update(
             mapOf(
                 "currentSpent" to newSpent,
                 "updatedAt"    to System.currentTimeMillis()
             )
-        ).await()
+        )
     }
 
     // Сбрасываем current_spent если период закончился
