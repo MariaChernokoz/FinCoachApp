@@ -27,7 +27,6 @@ fun FinCoachTopBar(
     onNavigationClick: () -> Unit = {},
     actionIcon: ImageVector? = null,
     onActionClick: () -> Unit = {},
-    // Для кастомного контента справа (например аватар в ассистенте)
     customAction: @Composable (() -> Unit)? = null
 ) {
     Row(
@@ -35,7 +34,7 @@ fun FinCoachTopBar(
             .fillMaxWidth()
             .background(DeepGreen)
             .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Кнопка назад / левая иконка
@@ -52,7 +51,7 @@ fun FinCoachTopBar(
             text = title,
             color = White,
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 22.sp,
             modifier = Modifier.weight(1f)
         )
 

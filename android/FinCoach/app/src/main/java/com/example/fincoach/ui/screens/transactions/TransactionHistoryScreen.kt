@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fincoach.data.model.Transaction
 import com.example.fincoach.ui.FinCoachTopBar
+import com.example.fincoach.ui.categoryEmoji
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.DeepGreen
 import com.example.fincoach.ui.theme.TextBlack
@@ -222,15 +223,15 @@ private fun HistoryTxItem(transaction: Transaction, onDelete: () -> Unit) {
         )
     }
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(42.dp).clip(CircleShape).background(if (transaction.isIncome) Color(0xFF27AE60).copy(0.12f) else Color(0xFFE74C3C).copy(0.12f)), contentAlignment = Alignment.Center) {
-            Text(if (transaction.isIncome) "↑" else "↓", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = if (transaction.isIncome) Color(0xFF27AE60) else Color(0xFFE74C3C))
+        Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(if (transaction.isIncome) Color(0xFF27AE60).copy(0.12f) else Color(0xFFE74C3C).copy(0.12f)), contentAlignment = Alignment.Center) {
+            Text(categoryEmoji(transaction.categoryTitle, transaction.isIncome), fontSize = 22.sp)
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(transaction.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextBlack)
+            Text(transaction.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = TextBlack)
             Text(transaction.categoryTitle.ifBlank { "—" }, color = TextGray, fontSize = 12.sp)
         }
-        Text("${if (transaction.isIncome) "+" else "−"} ${String.format("%,.2f", transaction.amount)} ₽", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = if (transaction.isIncome) Color(0xFF27AE60) else Color(0xFFE74C3C))
+        Text("${if (transaction.isIncome) "+" else "−"} ${String.format("%,.2f", transaction.amount)} ₽", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = TextBlack)
         IconButton(onClick = { showDialog = true }, modifier = Modifier.size(32.dp)) {
             Icon(Icons.Default.Delete, null, tint = TextPlaceholder, modifier = Modifier.size(16.dp))
         }

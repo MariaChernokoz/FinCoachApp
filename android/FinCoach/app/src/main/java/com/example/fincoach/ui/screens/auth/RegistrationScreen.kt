@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -33,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -53,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -124,6 +127,10 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    // Окно восстановления пароля
+    var showResetDialog by remember { mutableStateOf(false) }
+    var resetEmail by remember { mutableStateOf("") }
+
     // Дизайн (градиенты)
     val backgroundGradient = Brush.verticalGradient(colors = listOf(BrightGreen.copy(alpha = 0.8f), DeepGreen))
     val buttonGradient = Brush.verticalGradient(colors = listOf(BrightGreen, DeepGreen))
@@ -139,12 +146,17 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(60.dp))
 
             Text(
-                text = "Welcome to FinCoach AI!",
-                style = MaterialTheme.typography.headlineMedium.copy(color = White, fontWeight = FontWeight.ExtraBold)
+                text = "Добро пожаловать в FinCoach AI!",
+                style = MaterialTheme.typography.headlineMedium.copy(color = White, fontWeight = FontWeight.ExtraBold),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
             )
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Your personal finance coach",
-                style = MaterialTheme.typography.titleMedium.copy(color = White.copy(alpha = 0.9f))
+                text = "Ваш персональный финансовый коуч",
+                style = MaterialTheme.typography.titleMedium.copy(color = White.copy(alpha = 0.9f)),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
             )
 
             Spacer(modifier = Modifier.height(30.dp))
@@ -157,7 +169,7 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Text("$", style = TextStyle(fontSize = 68.sp, fontWeight = FontWeight.Black, color = DeepGreen))
+                    Text("₽", style = TextStyle(fontSize = 68.sp, fontWeight = FontWeight.Medium, color = DeepGreen))
                 }
             }
 
@@ -190,7 +202,7 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
                                 text = "Забыли пароль?",
                                 modifier = Modifier
                                     .align(androidx.compose.ui.Alignment.CenterEnd)
-                                    .clickable { /* TODO: Логика восстановления */ },
+                                    .clickable { resetEmail = email; showResetDialog = true },
                                 style = TextStyle(
                                     fontSize = 14.sp,
                                     color = TextGray,
@@ -252,6 +264,50 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
+    }
+
+    // Окно восстановления пароля
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            shape = RoundedCornerShape(24.dp),
+            containerColor = White,
+            title = {
+                Text(
+                    "Восстановление пароля",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        "Введите ваш email, и мы отправим инструкцию по восстановлению пароля.",
+                        color = TextGray,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    FinCoachTextField(resetEmail, { resetEmail = it }, "Email", Icons.Default.Email)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        authViewModel.resetPassword(resetEmail)
+                        showResetDialog = false
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DeepGreen)
+                ) {
+                    Text("Отправить", color = White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text("Закрыть", color = TextGray)
+                }
+            }
+        )
     }
 }
 

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,12 +28,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -49,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -62,8 +65,8 @@ import com.example.fincoach.ui.theme.TextDarkGray
 import com.example.fincoach.ui.theme.TextGray
 import com.example.fincoach.ui.theme.TextPlaceholder
 import com.example.fincoach.ui.theme.White
+import com.example.fincoach.data.model.ChatMessage
 import com.example.fincoach.viewmodel.AssistantViewModel
-import com.example.fincoach.viewmodel.ChatMessage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,8 +76,20 @@ fun AssistantScreen() {
     val vm: AssistantViewModel = viewModel()
     val messages  by vm.messages.collectAsState()
     val isLoading by vm.isLoading.collectAsState()
+    val canSendVm by vm.canSend.collectAsState()
+    val error     by vm.error.collectAsState()
+    val context = LocalContext.current
+
+    // Показываем ошибки ассистента всплывающим сообщением
+    LaunchedEffect(error) {
+        error?.let {
+            android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show()
+            vm.clearError()
+        }
+    }
 
     var inputText by remember { mutableStateOf("") }
+    var showClearDialog by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -82,36 +97,11 @@ fun AssistantScreen() {
     }
 
     Column(modifier = Modifier.fillMaxSize().background(BgLightGray)) {
-
-        // Шапка с кастомным контентом — аватар + статус
         FinCoachTopBar(
-            title = "",
-            customAction = {
-                // Пустой правый блок — весь контент в title через customAction слева
-            }
+            title = "Финансовый ассистент",
+            actionIcon = Icons.Default.Delete,
+            onActionClick = { showClearDialog = true }
         )
-        // Перекрываем стандартную шапку своей через отдельный Row поверх
-    }
-
-    Column(modifier = Modifier.fillMaxSize().background(BgLightGray)) {
-        // Зелёная шапка с аватаром
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(DeepGreen)
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(modifier = Modifier.size(34.dp).clip(CircleShape).background(White.copy(0.25f)), contentAlignment = Alignment.Center) {
-                Text("✦", color = White, fontSize = 14.sp)
-            }
-            Spacer(Modifier.width(10.dp))
-            Column {
-                Text("AI Коуч", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text(if (isLoading) "печатает..." else "онлайн", color = White.copy(0.8f), fontSize = 11.sp)
-            }
-        }
 
         LazyColumn(
             state = listState,
@@ -142,17 +132,36 @@ fun AssistantScreen() {
                 modifier = Modifier.weight(1f), shape = RoundedCornerShape(24.dp),
                 colors = TextFieldDefaults.colors(focusedContainerColor = BgLightGray, unfocusedContainerColor = BgLightGray, focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                keyboardActions = KeyboardActions(onSend = { if (inputText.isNotBlank() && !isLoading) { vm.sendMessage(inputText.trim()); inputText = "" } }),
+                keyboardActions = KeyboardActions(onSend = { if (inputText.isNotBlank() && !isLoading && canSendVm) { vm.sendMessage(inputText.trim()); inputText = "" } }),
                 maxLines = 4
             )
             Spacer(Modifier.width(8.dp))
-            val canSend = inputText.isNotBlank() && !isLoading
+            val canSend = inputText.isNotBlank() && !isLoading && canSendVm
             Box(modifier = Modifier.size(46.dp).clip(CircleShape).background(if (canSend) DeepGreen else BgLightGray), contentAlignment = Alignment.Center) {
                 IconButton(onClick = { if (canSend) { vm.sendMessage(inputText.trim()); inputText = "" } }, enabled = canSend) {
                     Icon(Icons.Default.Send, contentDescription = "Отправить", tint = if (canSend) White else TextPlaceholder, modifier = Modifier.size(20.dp))
                 }
             }
         }
+    }
+
+    // Подтверждение очистки истории
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Очистить историю?") },
+            text = { Text("Вся переписка с ассистентом будет удалена без возможности восстановления.") },
+            confirmButton = {
+                TextButton(onClick = { vm.clearChat(); showClearDialog = false }) {
+                    Text("Очистить", color = Color(0xFFE74C3C), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) {
+                    Text("Отмена", color = TextGray)
+                }
+            }
+        )
     }
 }
 

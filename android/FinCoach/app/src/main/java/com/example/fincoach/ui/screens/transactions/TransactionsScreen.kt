@@ -13,10 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
@@ -39,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fincoach.data.model.Transaction
 import com.example.fincoach.ui.FinCoachTopBar
+import com.example.fincoach.ui.categoryEmoji
 import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.DeepGreen
 import com.example.fincoach.ui.theme.TextBlack
@@ -65,7 +64,7 @@ fun TransactionsScreen(
         FinCoachTopBar(title = "Мои финансы", actionIcon = Icons.Default.Add, onActionClick = onNavigateToAdd)
 
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
@@ -89,8 +88,12 @@ fun TransactionsScreen(
                 Text("Добавить операцию", color = White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Последние операции", color = TextDarkGray, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, start = 4.dp, end = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Последние операции", color = TextDarkGray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("Все →", color = DeepGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { onNavigateToHistory() })
             }
 
@@ -104,7 +107,12 @@ fun TransactionsScreen(
                     }
                 }
             } else {
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = White),
+                    elevation = CardDefaults.cardElevation(2.dp)
+                ) {
                     Column {
                         limitedTxs.forEachIndexed { index, tx ->
                             TransactionRow(tx)
@@ -113,7 +121,6 @@ fun TransactionsScreen(
                     }
                 }
             }
-            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -129,19 +136,19 @@ private fun SummaryItem(label: String, amount: Double, color: Color, modifier: M
 @Composable
 private fun TransactionRow(tx: Transaction) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(if (tx.isIncome) Color(0xFF27AE60).copy(0.1f) else Color(0xFFE74C3C).copy(0.1f)), contentAlignment = Alignment.Center) {
-            Text(if (tx.isIncome) "↑" else "↓", color = if (tx.isIncome) Color(0xFF27AE60) else Color(0xFFE74C3C), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(if (tx.isIncome) Color(0xFF27AE60).copy(0.12f) else Color(0xFFE74C3C).copy(0.12f)), contentAlignment = Alignment.Center) {
+            Text(categoryEmoji(tx.categoryTitle, tx.isIncome), fontSize = 22.sp)
         }
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(tx.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextBlack)
+            Text(tx.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = TextBlack)
             Text(tx.categoryTitle, color = TextGray, fontSize = 12.sp)
         }
 
         Text(
             text = "${if (tx.isIncome) "+" else "−"} ${String.format("%,.2f", tx.amount)} ₽",
             fontWeight = FontWeight.Bold,
-            color = TextDarkGray,
+            color = TextBlack,
             fontSize = 14.sp
         )
     }
