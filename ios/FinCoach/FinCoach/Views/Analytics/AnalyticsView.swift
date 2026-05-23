@@ -13,6 +13,8 @@ struct AnalyticsView: View {
     @State private var showBudgetEditor = false
     @State private var editingBudget: Budget?
     @State private var showAllCategories = false
+    @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
 
     private let hints = [
         "Дай общую статистику моих трат",
@@ -30,8 +32,7 @@ struct AnalyticsView: View {
                         // header
                         aiCoachSearchBar
                         hintChipsSlider
-                        PeriodSelectorView(selected: $viewModel.period)
-                        AnalyticsSummaryCards(viewModel: viewModel)
+                        AnalyticsSummaryCards(viewModel: viewModel, period: $viewModel.period)
 
                         if viewModel.isLoading {
                             HStack {
@@ -67,7 +68,7 @@ struct AnalyticsView: View {
                     .padding(.bottom, 96)
                 }
                 .refreshable { await viewModel.load() }
-                .background(Color(.systemBackground))
+                .background(AppColors.backgroundGray)
 
                 Button {
                     showBudgetEditor = true
@@ -83,7 +84,8 @@ struct AnalyticsView: View {
                 .padding(.trailing, 24)
                 .padding(.bottom, 24)
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Анализ")
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if let userId = authViewModel.currentUser?.uid {
                     viewModel.start(userId: userId)
@@ -120,33 +122,49 @@ struct AnalyticsView: View {
     }
 
     private var aiCoachSearchBar: some View {
-        Button {
-            navigationState.navigateToAICoach()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "mic")
-                    .font(.system(size: 17))
-                    .foregroundColor(AppColors.grayTextColor)
+        HStack(spacing: 8) {
+            Image(systemName: "mic")
+                .font(.system(size: 16))
+                .foregroundColor(AppColors.grayTextColor)
 
-                Text("Спросите что-нибудь")
-                    .font(.system(size: 15))
-                    .foregroundColor(AppColors.grayTextColor)
+            TextField("Спросите что-нибудь", text: $searchText)
+                .font(.system(size: 16))
+                .foregroundColor(AppColors.blackTextColor)
+                .focused($isSearchFocused)
+                .onSubmit { sendToAICoach() }
 
-                Spacer()
-
-                Image(systemName: "arrow.up.circle")
+            Button {
+                sendToAICoach()
+            } label: {
+                Image(systemName: searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                      ? "arrow.up.circle" : "arrow.up.circle.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(AppColors.grayTextColor)
+                    .foregroundColor(
+                        searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        ? AppColors.grayTextColor : AppColors.lightGreenFrameColor
+                    )
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 13)
-            .background(AppColors.whiteFrameColor)
-            .cornerRadius(22)
-            .overlay(
-                RoundedRectangle(cornerRadius: 22)
-                    .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
-            )
+            .disabled(searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
+        .padding(.horizontal, 16)
+        .frame(height: 40)
+        .background(AppColors.whiteFrameColor)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    isSearchFocused ? AppColors.lightGreenFrameColor : AppColors.lightGrayFrameColor,
+                    lineWidth: 1
+                )
+        )
+        .cornerRadius(16)
+    }
+
+    private func sendToAICoach() {
+        let text = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        searchText = ""
+        isSearchFocused = false
+        navigationState.navigateToAICoach(with: text)
     }
 
     private var hintChipsSlider: some View {
