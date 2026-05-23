@@ -13,6 +13,7 @@ struct TransactionsView: View {
     @StateObject private var viewModel = TransactionsViewModel()
     @State private var editorRoute: TransactionEditorRoute?
     @State private var showFilterSheet = false
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -28,7 +29,7 @@ struct TransactionsView: View {
                     .padding(.bottom, 96)
                 }
                 .refreshable { await viewModel.loadTransactions() }
-                .background(Color(.systemBackground))
+                .background(AppColors.backgroundGray)
 
                 Button {
                     editorRoute = TransactionEditorRoute(transaction: nil)
@@ -44,7 +45,7 @@ struct TransactionsView: View {
                 .padding(.trailing, 24)
                 .padding(.bottom, 24)
             }
-            .navigationTitle("Transactions")
+            .navigationTitle("Транзакции")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if let userId = authViewModel.currentUser?.uid {
@@ -84,13 +85,19 @@ struct TransactionsView: View {
                     .font(.system(size: 16))
                     .foregroundColor(AppColors.grayTextColor)
                 TextField("Поиск транзакций", text: $viewModel.searchText)
+                    .font(.system(size: 15))
+                    .foregroundColor(AppColors.blackTextColor)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
+                    .focused($isSearchFocused)
             }
             .padding(.horizontal, 16)
             .frame(height: 40)
             .background(AppColors.whiteFrameColor)
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(
+                isSearchFocused ? AppColors.lightGreenFrameColor : AppColors.lightGrayFrameColor,
+                lineWidth: 1
+            ))
             .cornerRadius(16)
 
             Menu {

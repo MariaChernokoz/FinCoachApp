@@ -58,6 +58,8 @@ struct SettingsView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(AppColors.backgroundGray)
             .alert("Вы уверены, что хотите выйти?", isPresented: $showSignOutConfirmation) {
                 Button("Выйти", role: .destructive) {
                     authViewModel.signOut()

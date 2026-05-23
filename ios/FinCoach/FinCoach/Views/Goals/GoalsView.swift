@@ -27,7 +27,7 @@ struct GoalsView: View {
                     .padding(.bottom, 96)
                 }
                 .refreshable { await viewModel.load() }
-                .background(Color(.systemBackground))
+                .background(AppColors.backgroundGray)
 
                 Button {
                     editingGoal = nil
