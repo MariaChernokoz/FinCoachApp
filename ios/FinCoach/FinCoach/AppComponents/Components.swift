@@ -32,6 +32,8 @@ public struct AppColors {
     public static let darkGreenFrameColor = Color("darkGreenFrameColor")
     public static let purpleFrameColor = Color("purpleFrameColor")
     
+    public static let backgroundGray = Color(red: 246/255, green: 246/255, blue: 246/255)
+
     public static let linearGreenGradient: LinearGradient = {
         let gradient = LinearGradient(
             colors: [AppColors.lightGreenFrameColor, AppColors.darkGreenFrameColor],

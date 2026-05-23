@@ -35,30 +35,38 @@ struct QuoteOfTheDayView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 4) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppColors.grayTextColor)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(AppColors.lightGreenFrameColor)
                 Text("Мотивация дня")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(AppColors.grayTextColor)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColors.lightGreenFrameColor)
             }
 
             Text(quote)
-                .font(.system(size: 15, weight: .medium))
+                .font(.system(size: 15, weight: .regular))
+                .italic()
                 .foregroundColor(AppColors.blackTextColor)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
-        .padding(.vertical, 18)
-        .background(AppColors.lightGreenFrameColor)
+        .padding(.top, 14)
+        .padding(.bottom, 18)
+        .background(AppColors.whiteFrameColor)
         .cornerRadius(22)
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
+        )
     }
 }
 
 #Preview {
     QuoteOfTheDayView()
         .padding()
+        .background(AppColors.backgroundGray)
 }
