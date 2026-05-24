@@ -28,7 +28,7 @@ struct GoalsView: View {
                     .padding(.bottom, 96)
                 }
                 .refreshable { await viewModel.load() }
-                .background(AppColors.backgroundGray)
+                .background(AppColors.backgroundColor)
 
                 Button {
                     editingGoal = nil
@@ -193,7 +193,7 @@ struct GoalsView: View {
                     
                     Text(insight.message)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(AppColors.blackTextColor)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.trailing, 16)
                 }

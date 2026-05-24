@@ -69,7 +69,7 @@ struct GoalEditorView: View {
                     }
                 }
             }
-            .navigationTitle(goal == nil ? "Новая цель" : "Редактировать цель")
+            .navigationTitle(LocalizedStringKey(goal == nil ? "Новая цель" : "Редактировать цель"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

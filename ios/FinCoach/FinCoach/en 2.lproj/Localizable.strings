@@ -1,0 +1,163 @@
+/* Navigation Titles */
+"Анализ" = "Analytics";
+"Транзакции" = "Transactions";
+"Финансовый ассистент" = "Financial Assistant";
+"Цели и бюджеты" = "Goals & Budgets";
+"Настройки" = "Settings";
+"Восстановление пароля" = "Password Recovery";
+"Фильтры" = "Filters";
+"Все категории" = "All Categories";
+"Новый бюджет" = "New Budget";
+"Редактировать бюджет" = "Edit Budget";
+"Новая цель" = "New Goal";
+"Редактировать цель" = "Edit Goal";
+"Новая операция" = "New Transaction";
+"Редактирование" = "Edit";
+
+/* Common Actions */
+"Отмена" = "Cancel";
+"Сохранить" = "Save";
+"Добавить" = "Add";
+"Готово" = "Done";
+"Сбросить" = "Reset";
+"Ошибка" = "Error";
+"Произошла ошибка" = "An error occurred";
+"Выйти" = "Sign Out";
+"Закрыть" = "Close";
+"Применить" = "Apply";
+
+/* Settings */
+"Профиль" = "Profile";
+"Приложение" = "App";
+"Тема" = "Theme";
+"Выберите тему" = "Select Theme";
+"Светлая" = "Light";
+"Тёмная" = "Dark";
+"Системная" = "System";
+"Язык" = "Language";
+"Русский" = "Russian";
+"Выберите язык" = "Select Language";
+"Выйти из аккаунта" = "Sign Out";
+"Вы уверены, что хотите выйти?" = "Are you sure you want to sign out?";
+
+/* Auth */
+"Вход" = "Sign In";
+"Регистрация" = "Sign Up";
+"Имя" = "Name";
+"Пароль" = "Password";
+"Забыли пароль?" = "Forgot password?";
+"ВОЙТИ" = "SIGN IN";
+"ЗАРЕГИСТРИРОВАТЬСЯ" = "SIGN UP";
+"или" = "or";
+"Войти через Google" = "Sign in with Google";
+"Войти через Apple" = "Sign in with Apple";
+"Уведомление" = "Notification";
+"Введите ваш email и мы отправим инструкцию по восстановлению пароля" = "Enter your email and we'll send password recovery instructions";
+"ОТПРАВИТЬ" = "SEND";
+
+/* Transactions */
+"Поиск транзакций" = "Search transactions";
+"Баланс" = "Balance";
+"Расходы" = "Expenses";
+"Доходы" = "Income";
+"Загружаем транзакции" = "Loading transactions";
+
+/* Analytics */
+"Спросите что-нибудь у AI ассистента" = "Ask the AI assistant";
+"Расходы по категориям" = "Expenses by Category";
+"Среднее в день:" = "Daily average:";
+"Среднее в день" = "Daily average";
+"Выбрано" = "Selected";
+"Итого" = "Total";
+"Нажмите на категорию чтобы включить / исключить" = "Tap a category to include / exclude";
+"Нажмите на категорию чтобы исключить её" = "Tap a category to exclude it";
+"Динамика по месяцам" = "Monthly Dynamics";
+
+/* Period Selector */
+"Неделя" = "Week";
+"Месяц" = "Month";
+"3 мес." = "3 mo.";
+"Год" = "Year";
+
+/* AI Assistant */
+"Задайте вопрос..." = "Ask a question...";
+"Примеры вопросов:" = "Example questions:";
+"Дай общую статистику моих трат" = "Give me an overview of my spending";
+"Почему я трачу так много на еду?" = "Why do I spend so much on food?";
+"Успею ли я накопить на цель?" = "Will I manage to save for my goal?";
+"Как оптимизировать мой бюджет?" = "How can I optimize my budget?";
+"Произошла неизвестная ошибка" = "An unknown error occurred";
+"Какие расходы можно сократить?" = "What expenses can be reduced?";
+
+/* Goals */
+"Инсайт по целям" = "Goal Insight";
+"Цели" = "Goals";
+"Нет финансовых целей" = "No Financial Goals";
+"Создайте цель и следите\nза прогрессом накоплений" = "Create a goal and track\nyour savings progress";
+"Создать цель" = "Create Goal";
+"Бюджеты" = "Budgets";
+"Бюджеты не заданы" = "No Budgets Set";
+"Добавьте лимит по категории,\nчтобы контролировать траты" = "Add a category limit\nto control your spending";
+"Добавить бюджет" = "Add Budget";
+
+/* Goal Editor */
+"Название цели" = "Goal Name";
+"Например: Отпуск, Машина..." = "e.g.: Vacation, Car...";
+"Суммы" = "Amounts";
+"Цель накопления" = "Savings Target";
+"Уже накоплено" = "Already Saved";
+"Дедлайн" = "Deadline";
+"Установить срок" = "Set Deadline";
+"Дата" = "Date";
+
+/* Budget */
+"Категория" = "Category";
+"Выберите категорию" = "Select a category";
+"Лимит в месяц" = "Monthly Limit";
+"Сумма" = "Amount";
+"Лимит превышен" = "Limit exceeded";
+"Осталось %.0f%%" = "%.0f%% remaining";
+
+/* Filter */
+"Тип операции" = "Transaction Type";
+"Тип" = "Type";
+"Все" = "All";
+"Период" = "Period";
+"Начало" = "Start";
+"Конец" = "End";
+"Категории" = "Categories";
+"Сбросить фильтры" = "Reset Filters";
+
+/* Transaction Editor */
+"Название" = "Name";
+"Без категории" = "No Category";
+
+/* Empty States */
+"Транзакций пока нет" = "No Transactions Yet";
+"Добавьте первый доход или расход" = "Add your first income or expense";
+
+/* Offline */
+"Нет интернета" = "No Internet Connection";
+
+/* Daily Motivation */
+"Мотивация дня" = "Daily Motivation";
+"Финансовая свобода начинается с первого осознанного решения." = "Financial freedom starts with the first conscious decision.";
+"Не работайте ради денег — заставьте деньги работать на вас." = "Don't work for money — make money work for you.";
+"Бюджет — это не ограничение, а план вашей свободы." = "A budget is not a restriction, but a plan for your freedom.";
+"Лучшее время инвестировать было вчера. Второе лучшее — сегодня." = "The best time to invest was yesterday. The second best is today.";
+"Богатство — это разница между доходами и расходами, а не их размер." = "Wealth is the gap between income and expenses, not their size.";
+"Маленькие ежедневные траты складываются в большие годовые расходы." = "Small daily expenses add up to big annual costs.";
+"Финансовая дисциплина сегодня — финансовая независимость завтра." = "Financial discipline today means financial independence tomorrow.";
+"Каждая сэкономленная сумма — это инвестиция в ваше будущее." = "Every amount saved is an investment in your future.";
+"Трать меньше, чем зарабатываешь — это единственный секрет богатства." = "Spend less than you earn — that is the only secret to wealth.";
+"Цели без плана — это просто мечты. Поставьте финансовую цель." = "Goals without a plan are just dreams. Set a financial goal.";
+"Небольшие регулярные накопления творят большие чудеса." = "Small regular savings work big miracles.";
+"Осознанные траты делают жизнь богаче, а не беднее." = "Mindful spending makes life richer, not poorer.";
+"Ваш кошелёк отражает ваши приоритеты — расставьте их правильно." = "Your wallet reflects your priorities — set them right.";
+"Инвестиция в знания о деньгах окупается быстрее всего." = "Investing in financial knowledge pays off the fastest.";
+"Контролируйте деньги, иначе они будут контролировать вас." = "Control your money, or it will control you.";
+"Путь к финансовой цели начинается с отслеживания расходов." = "The path to a financial goal starts with tracking expenses.";
+"Каждый отказ от лишнего — это согласие на большее." = "Every refusal of the unnecessary is a step toward something greater.";
+"Деньги — инструмент. Научитесь им пользоваться мастерски." = "Money is a tool. Learn to use it masterfully.";
+"Сегодняшняя экономия — это завтрашняя возможность." = "Today's savings are tomorrow's opportunities.";
+"Каждый рубль, сохранённый сегодня — это шаг к свободе завтра." = "Every ruble saved today is a step toward freedom tomorrow.";

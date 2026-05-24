@@ -109,16 +109,16 @@ struct AuthView: View {
                         
                         HStack {
                             Rectangle()
-                                .fill(Color.gray.opacity(0.3))
+                                .fill(AppColors.lightGrayFrameColor)
                                 .frame(height: 1)
                             
                             Text("или")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(AppColors.grayTextColor)
                                 .padding(.horizontal, 8)
                             
                             Rectangle()
-                                .fill(Color.gray.opacity(0.3))
+                                .fill(AppColors.lightGrayFrameColor)
                                 .frame(height: 1)
                         }
                         .padding(.horizontal, 20)

@@ -60,12 +60,10 @@ struct AnalyticsSummaryCards: View {
         .cornerRadius(22)
     }
 
-    // MARK: - Subviews
-
-    private func metricColumn(title: String, amount: Double) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 11, weight: .semibold))
+    private func card(title: String, amount: Double, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(LocalizedStringKey(title))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundColor(AppColors.grayTextColor)
                 .lineLimit(1)
             HStack(alignment: .bottom, spacing: 3) {

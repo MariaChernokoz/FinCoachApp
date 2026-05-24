@@ -27,7 +27,7 @@ struct BudgetCardView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(categoryTitle)
+                    Text(LocalizedStringKey(categoryTitle))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(AppColors.blackTextColor)
                         .lineLimit(1)
@@ -57,7 +57,7 @@ struct BudgetCardView: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.red)
                 } else if fraction >= 0.7 {
-                    Text(String(format: "Осталось %.0f%%", (1 - fraction) * 100))
+                    Text(String(format: NSLocalizedString("Осталось %.0f%%", comment: ""), (1 - fraction) * 100))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.orange)
                 }

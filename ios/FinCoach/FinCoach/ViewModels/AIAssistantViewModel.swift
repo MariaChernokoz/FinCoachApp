@@ -106,7 +106,7 @@ final class AIAssistantViewModel: ObservableObject {
     private func addWelcomeMessage() {
         if messages.isEmpty {
             messages.append(ChatMessage(
-                text: "Привет! Я ваш финансовый AI коуч. Задавайте мне вопросы о ваших тратах, целях и бюджете!",
+                text: Bundle.L("ai.welcome"),
                 isUser: false
             ))
         }
@@ -148,6 +148,8 @@ final class AIAssistantViewModel: ObservableObject {
                 message = "Необходимо войти в аккаунт"
             case .invalidArgument:
                 message = "Некорректный вопрос"
+            case .resourceExhausted:
+                message = "Подождите несколько секунд перед следующим вопросом"
             case .internal:
                 message = "Внутренняя ошибка сервера"
             default:

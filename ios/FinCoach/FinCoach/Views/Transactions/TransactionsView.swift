@@ -13,11 +13,19 @@ struct TransactionsView: View {
     @StateObject private var viewModel = TransactionsViewModel()
     @State private var editorRoute: TransactionEditorRoute?
     @State private var showFilterSheet = false
+    @State private var isBalanceHidden = false
     @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
+                ShakeDetector {
+                    withAnimation {
+                        isBalanceHidden.toggle()
+                    }
+                }
+                .allowsHitTesting(false)
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         searchAndFilter
@@ -29,7 +37,7 @@ struct TransactionsView: View {
                     .padding(.bottom, 96)
                 }
                 .refreshable { await viewModel.loadTransactions() }
-                .background(AppColors.backgroundGray)
+                .background(AppColors.backgroundColor)
 
                 Button {
                     editorRoute = TransactionEditorRoute(transaction: nil)
@@ -168,6 +176,7 @@ struct TransactionsView: View {
                     .foregroundColor(AppColors.blackTextColor)
                     .minimumScaleFactor(0.7)
                     .lineLimit(1)
+                    .spoiler(isOn: $isBalanceHidden)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -184,6 +193,7 @@ struct TransactionsView: View {
                     imageName: "pig"
                 )
             }
+            .spoiler(isOn: $isBalanceHidden)
             .padding(.horizontal, 32)
             //.padding(.top, 8)
             .padding(.bottom, 12)

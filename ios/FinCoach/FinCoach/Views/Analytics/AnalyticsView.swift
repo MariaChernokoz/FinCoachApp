@@ -58,7 +58,7 @@ struct AnalyticsView: View {
                 .padding(.bottom, 32)
             }
             .refreshable { await viewModel.load() }
-            .background(AppColors.backgroundGray)
+            .background(AppColors.backgroundColor)
             .navigationTitle("Анализ")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
@@ -136,7 +136,7 @@ struct AnalyticsView: View {
                     Button {
                         navigationState.navigateToAICoach(with: hint)
                     } label: {
-                        Text(hint)
+                        Text(LocalizedStringKey(hint))
                             .font(.system(size: 13))
                             .foregroundColor(AppColors.blackTextColor)
                             .lineLimit(1)

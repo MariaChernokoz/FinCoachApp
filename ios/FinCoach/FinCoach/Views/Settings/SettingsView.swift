@@ -10,6 +10,8 @@ import FirebaseAuth
 
 struct SettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @AppStorage("appColorScheme") private var colorScheme: String = "system"
+    @AppStorage("appLanguage") private var language: String = "ru"
     @State private var showSignOutConfirmation = false
     
     var body: some View {
@@ -18,13 +20,7 @@ struct SettingsView: View {
                 Section {
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppColors.lightGreenFrameColor, AppColors.darkGreenFrameColor],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(AppColors.lightGreenFrameColor)
                             .frame(width: 60, height: 60)
                             .overlay(
                                 Text(getInitials())
@@ -34,12 +30,9 @@ struct SettingsView: View {
                             )
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(authViewModel.currentUser?.displayName ?? "Пользователь")
-                                .font(.headline)
-                            
                             Text(authViewModel.currentUser?.email ?? "")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .font(.headline)
+                                .foregroundColor(AppColors.grayTextColor)
                         }
                     }
                     .padding(.vertical, 8)
@@ -50,6 +43,38 @@ struct SettingsView: View {
                         .textCase(nil)
                 }
                 
+                Section {
+                    HStack {
+                        Image(systemName: "moon.fill")
+                            .foregroundColor(AppColors.lightGreenFrameColor)
+                            .frame(width: 28)
+                        Picker("Тема", selection: $colorScheme) {
+                            Text("Системная").tag("system")
+                            Text("Светлая").tag("light")
+                            Text("Тёмная").tag("dark")
+                        }
+                        .pickerStyle(.menu)
+                        .tint(AppColors.grayTextColor)
+                    }
+
+                    HStack {
+                        Image(systemName: "globe")
+                            .foregroundColor(AppColors.lightGreenFrameColor)
+                            .frame(width: 28)
+                        Picker("Язык", selection: $language) {
+                            Text("Русский").tag("ru")
+                            Text("English").tag("en")
+                        }
+                        .pickerStyle(.menu)
+                        .tint(AppColors.grayTextColor)
+                    }
+                } header: {
+                    Text("Приложение")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.blackTextColor)
+                        .textCase(nil)
+                }
+
                 Section {
                     Button(role: .destructive) {
                         showSignOutConfirmation = true
@@ -62,7 +87,7 @@ struct SettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.backgroundGray)
+            .background(AppColors.backgroundColor)
             .navigationTitle("Настройки")
             .navigationBarTitleDisplayMode(.inline)
             .alert("Вы уверены, что хотите выйти?", isPresented: $showSignOutConfirmation) {
