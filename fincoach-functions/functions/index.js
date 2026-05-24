@@ -246,11 +246,19 @@ function formatProfile(p) {
     }
 
     if (p.goals.length > 0) {
+        const monthlySavings = p.incomeTotal > 0 ? p.incomeTotal - p.expenseTotal : 0;
         lines.push("\nЦели накопления:");
         for (const g of p.goals) {
-            let line = `• "${g.title}": ${fmt(g.savedAmount)} из ${fmt(g.targetAmount)} ₽ (${g.progress}%), осталось накопить: ${fmt(g.remaining)} ₽`;
-            if (g.deadline) line += `, дедлайн: ${g.deadline}`;
-            if (g.monthsLeft !== null) line += ` (${g.monthsLeft} мес.)`;
+            let line = `• "${g.title}": накоплено ${fmt(g.savedAmount)} из ${fmt(g.targetAmount)} ₽ (${g.progress}%), осталось: ${fmt(g.remaining)} ₽`;
+            if (g.deadline && g.monthsLeft > 0) {
+                const monthlyNeeded = Math.round(g.remaining / g.monthsLeft);
+                line += `, дедлайн: ${g.deadline} (осталось ${g.monthsLeft} мес.), нужно откладывать: ${fmt(monthlyNeeded)} ₽/мес.`;
+            } else if (!g.deadline && monthlySavings > 0) {
+                const monthsAtCurrentRate = Math.round(g.remaining / monthlySavings);
+                line += `, без дедлайна; при текущем темпе (${fmt(monthlySavings)} ₽/мес. свободно) — цель через ~${monthsAtCurrentRate} мес.`;
+            } else if (!g.deadline) {
+                line += `, дедлайн не установлен`;
+            }
             lines.push(line);
         }
     }
@@ -360,7 +368,8 @@ exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
     let profile;
     try {
         profile = await getFinancialProfile(userId);
-        console.log(`[2/3] income=${profile.incomeTotal} expenses=${profile.expenseTotal} cats=${profile.categories.length} goals=${profile.goals.length} budgets=${profile.categories.filter(c => c.budgetLimit !== undefined).length} empty=${profile.isEmpty}`);
+        console.log(`[2/3] income=${profile.incomeTotal} expenses=${profile.expenseTotal} cats=${profile.categories.length} goals=${profile.goals.length} empty=${profile.isEmpty}`);
+        console.log(`[2/3] goals_raw=${JSON.stringify(profile.goals)}`);
     } catch (err) {
         console.error("[2/3] fetch error:", err);
         profile = { isEmpty: true };
