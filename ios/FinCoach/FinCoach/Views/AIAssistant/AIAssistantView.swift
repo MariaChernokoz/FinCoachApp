@@ -200,9 +200,9 @@ struct ExampleQuestionsView: View {
                     onQuestionTap(question)
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: "lightbulb.fill")
-                            .foregroundColor(AppColors.lightGreenFrameColor.opacity(0.8))
-                            .font(.system(size: 14))
+//                        Image(systemName: "lightbulb.fill")
+//                            .foregroundColor(AppColors.lightGreenFrameColor.opacity(0.8))
+//                            .font(.system(size: 14))
 
                         Text(question)
                             .font(.system(size: 14))

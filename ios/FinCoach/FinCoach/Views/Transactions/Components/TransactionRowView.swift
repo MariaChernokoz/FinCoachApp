@@ -15,7 +15,7 @@ struct TransactionRowView: View {
     var body: some View {
         HStack(spacing: 16) {
             Circle()
-                .fill(AppColors.lightGreenFrameColor.opacity(0.7))
+                .fill(AppColors.lightGreenFrameColor) //masha .opacity(0.7))
                 .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: iconName)

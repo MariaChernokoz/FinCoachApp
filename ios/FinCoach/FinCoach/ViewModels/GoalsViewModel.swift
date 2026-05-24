@@ -7,6 +7,12 @@ import Foundation
 import SwiftUI
 import Combine
 
+struct GoalInsight {
+    let message: String
+    let icon: String
+    let accentColor: Color
+}
+
 @MainActor
 final class GoalsViewModel: ObservableObject {
     @Published private(set) var goals: [Goal] = []
@@ -24,6 +30,20 @@ final class GoalsViewModel: ObservableObject {
     private var userId: String?
 
     // MARK: - Lifecycle
+
+    init() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+            let createdAt = Int64((Date().timeIntervalSince1970 - 90 * 24 * 3600) * 1000)
+            goals = [
+                Goal(id: "1", userId: "preview", title: "Отпуск в Сочи",
+                     targetAmount: 120_000, savedAmount: 45_000, createdAt: createdAt),
+                Goal(id: "2", userId: "preview", title: "Новый ноутбук",
+                     targetAmount: 80_000, savedAmount: 12_000, createdAt: createdAt)
+            ]
+        }
+        #endif
+    }
 
     func start(userId: String) {
         guard self.userId != userId else { return }
@@ -166,6 +186,96 @@ final class GoalsViewModel: ObservableObject {
                 await load()
             }
         }
+    }
+
+    // MARK: - Insights
+
+    var todayInsight: GoalInsight? {
+        let active = goals.filter { !$0.isCompleted && $0.targetAmount > 0 && $0.savedAmount < $0.targetAmount }
+        guard !active.isEmpty else { return nil }
+
+        let now = Date()
+        let nowMs = Int64(now.timeIntervalSince1970 * 1000)
+        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: now) ?? 1
+        let msPerMonth: Double = 1000 * 60 * 60 * 24 * 30.44
+
+        var candidates: [GoalInsight] = []
+
+        for goal in active {
+            let remaining = goal.targetAmount - goal.savedAmount
+            let monthsSinceCreation = Double(max(0, nowMs - goal.createdAt)) / msPerMonth
+
+            if goal.progress > 0.85 {
+                candidates.append(GoalInsight(
+                    message: "«\(goal.title)» — финишная прямая! Осталось накопить \(currency(remaining))",
+                    icon: "star.fill",
+                    accentColor: .orange
+                ))
+            }
+
+            if let deadline = goal.deadline, deadline > nowMs {
+                let totalDuration = Double(deadline - goal.createdAt)
+                if totalDuration > 0 {
+                    let expectedProgress = min(Double(nowMs - goal.createdAt) / totalDuration, 1.0)
+                    if expectedProgress > goal.progress + 0.12 {
+                        let daysLeft = Int(Double(deadline - nowMs) / (1000 * 60 * 60 * 24))
+                        candidates.append(GoalInsight(
+                            message: "«\(goal.title)» — вы немного отстаёте от плана. Осталось \(currency(remaining)) за \(daysLeft) дн.",
+                            icon: "exclamationmark.triangle.fill",
+                            accentColor: .orange
+                        ))
+                    } else if goal.progress > expectedProgress + 0.12 {
+                        let pct = Int((goal.progress - expectedProgress) * 100)
+                        candidates.append(GoalInsight(
+                            message: "«\(goal.title)» — отличный прогресс! Вы опережаете план на \(pct)%",
+                            icon: "checkmark.seal.fill",
+                            accentColor: AppColors.lightGreenFrameColor
+                        ))
+                    }
+                }
+            }
+
+            if monthsSinceCreation > 0.5 && goal.savedAmount > 0 && remaining > 0 {
+                let monthlyRate = goal.savedAmount / monthsSinceCreation
+                if monthlyRate > 100 {
+                    let bonus = Double(2000 + (dayOfYear % 5) * 1000)
+                    let monthsNow = remaining / monthlyRate
+                    let monthsWith = remaining / (monthlyRate + bonus)
+                    let monthsSaved = monthsNow - monthsWith
+                    if monthsWith <= monthsNow * 0.85 && monthsSaved >= 1 {
+                        candidates.append(GoalInsight(
+                            message: "Если откладывать на \(currency(bonus)) больше в месяц, достигнете «\(goal.title)» на \(Int(monthsSaved)) мес. раньше",
+                            icon: "lightbulb.fill",
+                            accentColor: AppColors.lightGreenFrameColor
+                        ))
+                    }
+                }
+            }
+        }
+
+        if candidates.isEmpty {
+            let goal = active[dayOfYear % active.count]
+            let pct = Int(goal.progress * 100)
+            let remaining = goal.targetAmount - goal.savedAmount
+            candidates.append(GoalInsight(
+                message: pct > 0
+                    ? "Вы уже накопили \(pct)% к цели «\(goal.title)». Осталось \(currency(remaining)) — продолжайте!"
+                    : "Цель «\(goal.title)» ждёт первого пополнения. Начните копить сегодня!",
+                icon: pct > 0 ? "chart.line.uptrend.xyaxis" : "flag.fill",
+                accentColor: AppColors.lightGreenFrameColor
+            ))
+        }
+
+        return candidates[dayOfYear % candidates.count]
+    }
+
+    private func currency(_ amount: Double) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = "RUB"
+        f.locale = Locale(identifier: "ru_RU")
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: amount)) ?? "\(Int(amount)) ₽"
     }
 
     private func presentError(_ message: String) {

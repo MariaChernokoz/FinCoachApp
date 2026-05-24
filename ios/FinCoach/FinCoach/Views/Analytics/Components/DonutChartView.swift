@@ -13,8 +13,10 @@ struct DonutChartView: View {
     let onToggle: (String) -> Void
     let onReset: () -> Void
     let onShowAll: () -> Void
+    @Binding var period: AnalyticsPeriod
+    let averageDailyExpense: Double
 
-    private var visibleLegendItems: [CategorySpending] { Array(allBreakdown.prefix(5)) }
+    private var visibleLegendItems: [CategorySpending] { Array(allBreakdown.prefix(4)) }
     private var hasMore: Bool { allBreakdown.count > 5 }
     private var hasFilter: Bool { !excludedCategories.isEmpty }
     private var chartTotal: Double { chartBreakdown.reduce(0) { $0 + $1.amount } }
@@ -34,22 +36,33 @@ struct DonutChartView: View {
             }
 
             VStack(alignment: .leading, spacing: 16) {
+                PeriodSelectorView(selected: $period)
+                HStack(alignment: .center) {
+                    Text("Среднее в день:")
+                        .font(.system(size: 13))
+                        .foregroundColor(AppColors.grayTextColor)
+                    Text(formatted(averageDailyExpense))
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(AppColors.blackTextColor)
+                    Spacer()
+                }
+
                 ZStack {
                     if chartBreakdown.isEmpty {
                         Circle()
-                            .stroke(AppColors.lightGrayFrameColor, lineWidth: 10)
-                            .frame(height: 210)
+                            .stroke(AppColors.lightGrayFrameColor, lineWidth: 8)
+                            .frame(height: 180)
                     } else {
                         Chart(chartBreakdown) { item in
                             SectorMark(
                                 angle: .value("Сумма", item.amount),
-                                innerRadius: .ratio(0.72),
+                                innerRadius: .ratio(0.75),
                                 angularInset: 1.5
                             )
                             .cornerRadius(4)
                             .foregroundStyle(item.color)
                         }
-                        .frame(height: 210)
+                        .frame(height: 180)
                     }
 
                     VStack(spacing: 2) {
@@ -57,12 +70,20 @@ struct DonutChartView: View {
                             .font(.system(size: 12, weight: .regular))
                             .foregroundColor(AppColors.grayTextColor)
                         Text(formatted(chartTotal))
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 22, weight: .bold))
                             .foregroundColor(AppColors.blackTextColor)
                             .minimumScaleFactor(0.6)
                             .lineLimit(1)
-                            .frame(maxWidth: 110)
+                            .frame(maxWidth: 100)
                     }
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    Image("pig_analysis")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 72, height: 72)
+                        .offset(y: 18)
+                        .allowsHitTesting(false)
                 }
 
                 VStack(spacing: 0) {
@@ -113,16 +134,18 @@ struct DonutChartView: View {
     }
 
     private func legendRow(_ item: CategorySpending, excluded: Bool) -> some View {
-        HStack(spacing: 10) {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(excluded ? AppColors.lightGrayFrameColor : item.color)
-                .frame(width: 12, height: 12)
-            Image(systemName: item.icon)
-                .font(.system(size: 13))
-                .foregroundColor(AppColors.grayTextColor)
-                .frame(width: 18)
+        HStack(spacing: 12) {
+            Circle()
+                .fill(excluded ? AppColors.lightGrayFrameColor.opacity(0.5) : AppColors.lightGreenFrameColor)
+                .frame(width: 34, height: 34)
+                .overlay(Circle().stroke(excluded ? Color.clear : item.color, lineWidth: 4))
+                .overlay(
+                    Image(systemName: item.icon)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(excluded ? AppColors.grayTextColor : AppColors.darkGrayFrameColor)
+                )
             Text(item.category)
-                .font(.system(size: 14, weight: .regular))
+                .font(.system(size: 15, weight: .regular))
                 .foregroundColor(AppColors.blackTextColor)
                 .lineLimit(1)
                 .strikethrough(excluded, color: AppColors.grayTextColor)
@@ -133,12 +156,12 @@ struct DonutChartView: View {
                     .foregroundColor(AppColors.grayTextColor)
                     .frame(width: 44, alignment: .trailing)
                 Text(formatted(item.amount))
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(AppColors.blackTextColor)
                     .frame(minWidth: 80, alignment: .trailing)
             }
         }
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
     }
 

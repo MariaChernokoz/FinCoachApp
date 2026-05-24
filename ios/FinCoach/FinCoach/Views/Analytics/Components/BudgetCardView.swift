@@ -17,7 +17,7 @@ struct BudgetCardView: View {
     var body: some View {
         HStack(spacing: 16) {
             Circle()
-                .fill(AppColors.lightGreenFrameColor.opacity(0.65))
+                .fill(AppColors.lightGreenFrameColor) //.opacity(0.65)) //masha
                 .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: categoryIcon)

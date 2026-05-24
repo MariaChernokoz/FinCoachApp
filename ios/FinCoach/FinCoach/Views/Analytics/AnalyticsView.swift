@@ -26,10 +26,10 @@ struct AnalyticsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    aiCoachSearchBar
-                    hintChipsSlider
-                    PeriodSelectorView(selected: $viewModel.period)
-                    AnalyticsSummaryCards(viewModel: viewModel)
+                    VStack(alignment: .leading, spacing: 6) {
+                        aiCoachSearchBar
+                        hintChipsSlider
+                    }
 
                     if viewModel.isLoading {
                         HStack {
@@ -39,16 +39,16 @@ struct AnalyticsView: View {
                             Spacer()
                         }
                     } else {
-                        if !viewModel.categoryBreakdown.isEmpty {
-                            DonutChartView(
-                                allBreakdown: viewModel.categoryBreakdown,
-                                chartBreakdown: viewModel.filteredCategoryBreakdown,
-                                excludedCategories: viewModel.excludedChartCategories,
-                                onToggle: { viewModel.toggleChartCategory($0) },
-                                onReset: { viewModel.excludedChartCategories = [] },
-                                onShowAll: { showAllCategories = true }
-                            )
-                        }
+                        DonutChartView(
+                            allBreakdown: viewModel.categoryBreakdown,
+                            chartBreakdown: viewModel.filteredCategoryBreakdown,
+                            excludedCategories: viewModel.excludedChartCategories,
+                            onToggle: { viewModel.toggleChartCategory($0) },
+                            onReset: { viewModel.excludedChartCategories = [] },
+                            onShowAll: { showAllCategories = true },
+                            period: $viewModel.period,
+                            averageDailyExpense: viewModel.averageDailyExpense
+                        )
 
                         MonthlyBarChartView(points: viewModel.monthlyPoints)
                     }
@@ -90,7 +90,7 @@ struct AnalyticsView: View {
                 .font(.system(size: 17))
                 .foregroundColor(AppColors.grayTextColor)
 
-            TextField("Спросите что-нибудь", text: $searchText)
+            TextField("Спросите что-нибудь у AI ассистента", text: $searchText)
                 .font(.system(size: 15))
                 .foregroundColor(AppColors.blackTextColor)
                 .focused($isSearchFocused)

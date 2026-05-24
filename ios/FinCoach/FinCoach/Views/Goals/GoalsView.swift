@@ -19,6 +19,7 @@ struct GoalsView: View {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        insightsSection
                         goalsSection
                         budgetSection
                     }
@@ -39,7 +40,7 @@ struct GoalsView: View {
                         .frame(width: 58, height: 58)
                         .background(AppColors.lightGreenFrameColor)
                         .clipShape(Circle())
-                        .shadow(color: AppColors.lightGreenFrameColor.opacity(0.35), radius: 14, x: 0, y: 8)
+//                        .shadow(color: AppColors.lightGreenFrameColor.opacity(0.35), radius: 14, x: 0, y: 8)
                 }
                 .padding(.trailing, 24)
                 .padding(.bottom, 24)
@@ -140,7 +141,7 @@ struct GoalsView: View {
         VStack(spacing: 12) {
             Image(systemName: "target")
                 .font(.system(size: 34, weight: .light))
-                .foregroundColor(AppColors.lightGreenFrameColor.opacity(0.7))
+                .foregroundColor(AppColors.lightGreenFrameColor) //.opacity(0.7)) masha
             Text("Нет финансовых целей")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(AppColors.grayTextColor)
@@ -166,6 +167,43 @@ struct GoalsView: View {
         .background(AppColors.whiteFrameColor)
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
         .cornerRadius(16)
+    }
+
+    // MARK: - Insights section
+
+    @ViewBuilder
+    private var insightsSection: some View {
+        if let insight = viewModel.todayInsight {
+            HStack(spacing: 0) {
+                Image("pig_goals")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 90, height: 90)
+                    .padding(.horizontal, 16)
+                
+                VStack (alignment: .leading, spacing: 6) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(AppColors.grayTextColor)
+                        Text("Инсайт по целям")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(AppColors.grayTextColor)
+                    }
+                    
+                    Text(insight.message)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.black)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.trailing, 16)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 16)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(AppColors.lightGreenFrameColor)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
     }
 
     // MARK: - Budget section
@@ -224,7 +262,7 @@ struct GoalsView: View {
         VStack(spacing: 12) {
             Image(systemName: "list.bullet.rectangle")
                 .font(.system(size: 34, weight: .light))
-                .foregroundColor(AppColors.lightGreenFrameColor.opacity(0.7))
+                .foregroundColor(AppColors.lightGreenFrameColor) // masha .opacity(0.7))
             Text("Бюджеты не заданы")
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(AppColors.grayTextColor)

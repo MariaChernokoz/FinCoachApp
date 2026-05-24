@@ -15,31 +15,31 @@ struct OverflowMetricCard: View {
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 4) {
-                Spacer().frame(height: 28)
+                Spacer().frame(height: 32)
                 Text(currency(amount))
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundColor(AppColors.blackTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
+                    .padding(.bottom, -4)
                 Text(title)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundColor(AppColors.grayTextColor)
+                    .padding(.bottom, -4)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(AppColors.backgroundGray)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
-            )
             .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
             .padding(.top, 20)
+            .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 10)
 
             Image(imageName)
                 .renderingMode(.original)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 66, height: 66)
+                .frame(width: 76, height: 76)
         }
     }
 
@@ -59,5 +59,5 @@ struct OverflowMetricCard: View {
         OverflowMetricCard(title: "Доходы", amount: 120000, imageName: "pig")
     }
     .padding()
-    .background(AppColors.whiteFrameColor)
+    .background(AppColors.lightGreenFrameColor)
 }

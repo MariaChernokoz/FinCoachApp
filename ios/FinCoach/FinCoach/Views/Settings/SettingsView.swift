@@ -44,7 +44,10 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                 } header: {
-                    Text("ПРОФИЛЬ")
+                    Text("Профиль")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.blackTextColor)
+                        .textCase(nil)
                 }
                 
                 Section {
