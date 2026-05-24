@@ -35,39 +35,31 @@ struct QuoteOfTheDayView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 4) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(AppColors.grayTextColor)
-                    Text("Мотивация дня")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(AppColors.grayTextColor)
-                }
-                
-                Text(LocalizedStringKey(quote))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(AppColors.blackTextColor)
-                    .fixedSize(horizontal: false, vertical: true)
-                //.shadow(color: Color.black.opacity(0.07), radius: 4, x: 0, y: 2) //masha
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(AppColors.grayTextColor)
+                Text("Мотивация дня")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(AppColors.grayTextColor)
             }
-            Spacer()
-            Image("pig_assistant")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 70, height: 70)
+
+            Text(quote)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(AppColors.whiteTextColor)
+                .fixedSize(horizontal: false, vertical: true)
+                .shadow(color: Color.black.opacity(0.2), radius: 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
         .background(AppColors.lightGreenFrameColor)
-        .cornerRadius(16)
+        .cornerRadius(22)
     }
 }
 
 #Preview {
     QuoteOfTheDayView()
         .padding()
-        .background(AppColors.backgroundGray)
 }

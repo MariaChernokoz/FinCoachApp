@@ -8,8 +8,6 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseFunctions
-import FirebaseFirestore
-import FirebaseAuth
 import Combine
 
 final class AIAssistantViewModel: ObservableObject {
@@ -50,11 +48,8 @@ final class AIAssistantViewModel: ObservableObject {
         messages.append(userMessage)
         saveMessage(userMessage)
 
-        let transactions = TransactionsMockService.shared.getMockTransactions().map { $0.dictionary }
-        let data: [String: Any] = ["question": text, "transactions": transactions]
-
         isLoading = true
-        callAnalyzeFinances(with: ["message": trimmed])
+        callAnalyzeFinances(with: ["message": text])
     }
 
     func loadExampleQuestion(_ question: String) {
@@ -68,14 +63,21 @@ final class AIAssistantViewModel: ObservableObject {
     // MARK: - Firestore
 
     private func loadMessages(userId: String) {
-        db.collection("users").document(userId).collection("chat_messages")
+        db.collection("chat_messages")
+            .whereField("userId", isEqualTo: userId)
             .order(by: "timestamp", descending: false)
             .limit(to: 100)
-            .getDocuments { [weak self] snapshot, _ in
+            .getDocuments { [weak self] snapshot, error in
                 guard let self else { return }
                 DispatchQueue.main.async {
-                    if let docs = snapshot?.documents, !docs.isEmpty {
-                        self.messages = docs.compactMap { doc in
+                    if let error {
+                        print("[Chat] loadMessages error: \(error.localizedDescription)")
+                        self.addWelcomeMessage()
+                        return
+                    }
+                    let docs = snapshot?.documents ?? []
+                    if !docs.isEmpty {
+                        self.messages = docs.compactMap { doc -> ChatMessage? in
                             let data = doc.data()
                             guard
                                 let text = data["text"] as? String,
@@ -94,11 +96,12 @@ final class AIAssistantViewModel: ObservableObject {
     private func saveMessage(_ message: ChatMessage) {
         guard let userId else { return }
         let data: [String: Any] = [
+            "userId": userId,
             "text": message.text,
             "isUser": message.isUser,
             "timestamp": Timestamp(date: message.timestamp)
         ]
-        db.collection("users").document(userId).collection("chat_messages")
+        db.collection("chat_messages")
             .document(message.id)
             .setData(data)
     }

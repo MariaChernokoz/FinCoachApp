@@ -15,19 +15,30 @@ setGlobalOptions({ region: "us-central1", maxInstances: 10 });
 const AUTH_KEY = process.env.GIGACHAT_AUTH_KEY;
 const RATE_LIMIT_MS = 3000;
 const MAX_MESSAGE_LENGTH = 500;
-const GIGACHAT_FALLBACK = "Упс, я временно вне зоны доступа. Но я помню, что ты молодец! Попробуй чуть позже.";
+const GIGACHAT_FALLBACK = "Упс, я временно вне зоны доступа. Попробуй чуть позже — я никуда не ухожу!";
+
+// Категории которые нельзя советовать сокращать
+const FIXED_CATEGORY_KEYWORDS = [
+    "жильё", "жилье", "аренда", "ипотека", "кредит",
+    "коммуналка", "жкх", "интернет", "связь", "страховка", "налог"
+];
+
+function isFixed(title) {
+    const lower = (title ?? "").toLowerCase();
+    return FIXED_CATEGORY_KEYWORDS.some(k => lower.includes(k));
+}
+
+function fmt(n) {
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
 
 // ─── Token Cache ───────────────────────────────────────────────────────────────
-// GigaChat токен живёт ~30 минут. Кешируем на уровне модуля, чтобы не делать
-// лишний OAuth-запрос на каждый вызов функции (экономия времени и квоты Сбера).
 let _tokenCache = { value: null, expiresAt: 0 };
 
 async function getGigaToken() {
-    // Обновляем токен только если до истечения осталось меньше 60 секунд
     if (_tokenCache.value && _tokenCache.expiresAt - Date.now() > 60_000) {
         return _tokenCache.value;
     }
-
     if (!AUTH_KEY) throw new Error("GIGACHAT_AUTH_KEY is not configured");
 
     const response = await axios.request({
@@ -37,36 +48,29 @@ async function getGigaToken() {
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
-            "RqUID": randomUUID(), // Сбер требует уникальный UUID на каждый запрос
+            "RqUID": randomUUID(),
             "Authorization": `Basic ${AUTH_KEY}`
         },
         data: new URLSearchParams({ scope: "GIGACHAT_API_PERS" }).toString(),
         httpsAgent: sberAgent
     });
 
-    const expiresIn = response.data.expires_in ?? 1800; // fallback 30 мин
+    const expiresIn = response.data.expires_in ?? 1800;
     _tokenCache = {
         value: response.data.access_token,
         expiresAt: Date.now() + expiresIn * 1000
     };
-
     return _tokenCache.value;
 }
 
-// ─── Intent Router ─────────────────────────────────────────────────────────────
-// Определяем намерение пользователя по регулярным выражениям.
-// Первый совпавший интент побеждает — порядок в объекте = приоритет.
+// ─── Intent Detection ──────────────────────────────────────────────────────────
 const INTENT_PATTERNS = {
-    expense_analytics: [
-        /сколько.*(потрат|трат|расход)/i,
-        /трат[аыиу]/i,
-        /расход[ыа]/i,
-        /категор/i,
+    budget: [
         /бюджет/i,
-        /куда.*(уход|ушл)/i,
-        /за (месяц|неделю|период)/i,
-        /анали[зт]/i,
-        /граф[иу]/i
+        /лимит/i,
+        /превыси/i,
+        /уложи[лсь]/i,
+        /план.*(трат|расход)/i
     ],
     savings_goals: [
         /цел[ьи]/i,
@@ -77,9 +81,33 @@ const INTENT_PATTERNS = {
         /на море/i,
         /на отпуск/i,
         /прогресс/i,
-        /сколько осталось/i
+        /сколько осталось/i,
+        /успе[юя] накопить/i
+    ],
+    expense_analytics: [
+        /трат/i,
+        /расход/i,
+        /статистик/i,
+        /категор/i,
+        /куда.*(уход|ушл)/i,
+        /за (месяц|неделю|период)/i,
+        /анали[зт]/i,
+        /граф[иу]/i
+    ],
+    income: [
+        /доход/i,
+        /зарплат/i,
+        /получ[аи]/i,
+        /заработ/i,
+        /сколько (я |мы )?зараб/i
+    ],
+    advice: [
+        /сове[тч]/i,
+        /помог/i,
+        /как (мне |нам )?(сэконом|накопит|откладыват|улучшить|оптимизирова)/i,
+        /что (мне |нам )?делать/i,
+        /с чего начать/i
     ]
-    // Всё что не попало в паттерны выше → "general"
 };
 
 function detectIntent(message) {
@@ -89,141 +117,197 @@ function detectIntent(message) {
     return "general";
 }
 
-// ─── Firestore Fetchers ────────────────────────────────────────────────────────
-
-// Расходы: сначала пробуем агрегированный документ за текущий месяц.
-// Если его нет — fallback-запрос к транзакциям (последние 30 дней, лимит 50).
-async function getExpenseContext(userId) {
-    const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-    const statsSnap = await db.doc(`users/${userId}/monthly_stats/${monthKey}`).get();
-
-    if (statsSnap.exists) {
-        const data = statsSnap.data();
-        return {
-            isEmpty: false,
-            source: "monthly_stats",
-            stats: {
-                totalExpenses: data.totalExpenses ?? 0,
-                categories: data.categories ?? {}
-            }
-        };
-    }
-
-    // Fallback: транзакции хранятся в глобальной коллекции "transactions",
-    // фильтруем по userId. Дата — timestamp в миллисекундах (Int64).
+// ─── Financial Profile ─────────────────────────────────────────────────────────
+async function getFinancialProfile(userId) {
     const monthAgoMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-    const txSnap = await db.collection("transactions")
-        .where("userId", "==", userId)
-        .where("isIncome", "==", false)
-        .where("timestamp", ">=", monthAgoMs)
-        .orderBy("timestamp", "desc")
-        .limit(50)
-        .get();
+    const [txSnap, goalsSnap, budgetsSnap] = await Promise.all([
+        db.collection("transactions")
+            .where("userId", "==", userId)
+            .where("timestamp", ">=", monthAgoMs)
+            .orderBy("timestamp", "desc")
+            .limit(100)
+            .get(),
+        db.collection("goals")
+            .where("userId", "==", userId)
+            .where("isCompleted", "==", false)
+            .limit(10)
+            .get(),
+        db.collection("budgets")
+            .where("userId", "==", userId)
+            .get()
+    ]);
 
-    if (txSnap.empty) {
-        return { isEmpty: true, source: "fallback", stats: { totalExpenses: 0, categories: {} } };
+    // Aggregate transactions
+    let incomeTotal = 0;
+    let expenseTotal = 0;
+    const categoryMap = {}; // categoryId → { title, amount }
+    const allExpenses = [];
+
+    txSnap.forEach(doc => {
+        const { amount = 0, isIncome, categoryId, category, categoryTitle, title } = doc.data();
+        const catKey = categoryId ?? "other";
+        const catTitle = categoryTitle ?? category ?? catKey;
+
+        if (isIncome) {
+            incomeTotal += amount;
+        } else {
+            expenseTotal += amount;
+            if (!categoryMap[catKey]) categoryMap[catKey] = { title: catTitle, amount: 0 };
+            categoryMap[catKey].amount += amount;
+            allExpenses.push({ label: title ?? catTitle, amount });
+        }
+    });
+
+    // Top 3 single transactions
+    allExpenses.sort((a, b) => b.amount - a.amount);
+    const topTransactions = allExpenses.slice(0, 3);
+
+    // Build budgets map
+    const budgetMap = {};
+    budgetsSnap.forEach(doc => {
+        const { categoryId, limitAmount, currentSpent } = doc.data();
+        if (categoryId) budgetMap[categoryId] = { limit: limitAmount ?? 0, spent: currentSpent ?? 0 };
+    });
+
+    // Build sorted categories with budget info
+    const categories = Object.entries(categoryMap)
+        .sort(([, a], [, b]) => b.amount - a.amount)
+        .map(([catId, { title, amount }]) => {
+            const pct = expenseTotal > 0 ? Math.round((amount / expenseTotal) * 100) : 0;
+            const fixed = isFixed(title);
+            const b = budgetMap[catId];
+            const entry = { title, amount, pct, fixed };
+            if (b) {
+                entry.budgetLimit = b.limit;
+                entry.budgetOverrun = Math.max(0, amount - b.limit);
+                entry.budgetLeft = Math.max(0, b.limit - amount);
+            }
+            return entry;
+        });
+
+    // Goals
+    const goals = goalsSnap.docs.map(doc => {
+        const { title, targetAmount = 0, savedAmount = 0, deadline } = doc.data();
+        const progress = targetAmount > 0 ? Math.round((savedAmount / targetAmount) * 100) : 0;
+        const remaining = Math.max(0, targetAmount - savedAmount);
+        const deadlineDate = deadline ? new Date(deadline).toISOString().split("T")[0] : null;
+
+        // Months to deadline
+        let monthsLeft = null;
+        if (deadline) {
+            const msLeft = deadline - Date.now();
+            monthsLeft = Math.max(0, Math.round(msLeft / (30 * 24 * 60 * 60 * 1000)));
+        }
+
+        return { title, targetAmount, savedAmount, remaining, progress, deadline: deadlineDate, monthsLeft };
+    });
+
+    const savingsRate = incomeTotal > 0
+        ? Math.round(((incomeTotal - expenseTotal) / incomeTotal) * 100)
+        : null;
+
+    return {
+        incomeTotal,
+        expenseTotal,
+        savingsRate,
+        categories,
+        goals,
+        topTransactions,
+        isEmpty: txSnap.empty && goalsSnap.empty
+    };
+}
+
+// ─── Profile Formatter ─────────────────────────────────────────────────────────
+function formatProfile(p) {
+    const lines = ["=== ФИНАНСОВЫЙ ПРОФИЛЬ (30 дней) ==="];
+
+    if (p.incomeTotal > 0) {
+        const saved = p.incomeTotal - p.expenseTotal;
+        lines.push(`Доход: ${fmt(p.incomeTotal)} ₽ | Расходы: ${fmt(p.expenseTotal)} ₽ | Свободно: ${fmt(saved)} ₽ (норма сбережения: ${p.savingsRate}%)`);
+    } else {
+        lines.push(`Расходы: ${fmt(p.expenseTotal)} ₽ (доход не записан)`);
     }
 
-    // Агрегируем в памяти — в GigaChat уйдёт готовая статистика, не сырые документы
-    const stats = { totalExpenses: 0, categories: {} };
-    txSnap.forEach(doc => {
-        const { amount = 0, category = "other" } = doc.data();
-        stats.totalExpenses += amount;
-        stats.categories[category] = (stats.categories[category] ?? 0) + amount;
-    });
+    if (p.categories.length > 0) {
+        lines.push("\nРасходы по категориям:");
+        for (const c of p.categories) {
+            let line = `• ${c.title}: ${fmt(c.amount)} ₽ (${c.pct}%)`;
+            if (c.fixed) line += " [обязательная]";
+            if (c.budgetLimit !== undefined) {
+                if (c.budgetOverrun > 0) {
+                    line += ` ⚠️ превышен лимит ${fmt(c.budgetLimit)} ₽ на ${fmt(c.budgetOverrun)} ₽`;
+                } else {
+                    line += ` ✓ лимит ${fmt(c.budgetLimit)} ₽, остаток ${fmt(c.budgetLeft)} ₽`;
+                }
+            }
+            lines.push(line);
+        }
+    }
 
-    return { isEmpty: false, source: "fallback", stats };
+    if (p.goals.length > 0) {
+        lines.push("\nЦели накопления:");
+        for (const g of p.goals) {
+            let line = `• "${g.title}": ${fmt(g.savedAmount)} из ${fmt(g.targetAmount)} ₽ (${g.progress}%), осталось накопить: ${fmt(g.remaining)} ₽`;
+            if (g.deadline) line += `, дедлайн: ${g.deadline}`;
+            if (g.monthsLeft !== null) line += ` (${g.monthsLeft} мес.)`;
+            lines.push(line);
+        }
+    }
+
+    if (p.topTransactions.length > 0) {
+        lines.push("\nКрупнейшие траты:");
+        p.topTransactions.forEach(t => lines.push(`• ${t.label}: ${fmt(t.amount)} ₽`));
+    }
+
+    return lines.join("\n");
 }
 
-// Цели: читаем только активные, без архивных
-async function getGoalsContext(userId) {
-    const snap = await db.collection(`users/${userId}/goals`)
-        .where("status", "==", "active")
-        .limit(10)
-        .get();
+// ─── Prompt Builder ────────────────────────────────────────────────────────────
+const SYSTEM_PROMPT = `Ты финансовый коуч в приложении FinCoach. Твои правила:
 
-    if (snap.empty) return { isEmpty: true, goals: [] };
+1. Используй ТОЛЬКО данные из профиля пользователя. Не придумывай цифры.
+2. НЕ задавай уточняющих вопросов — данные уже есть, отвечай сразу.
+3. Категории помеченные [обязательная] (жильё, аренда, ипотека, коммуналка) — НЕ советуй их сокращать, это базовые нужды.
+4. Фокусируй советы на дискреционных тратах (красота, развлечения, рестораны, одежда, хобби).
+5. Превышение бюджета — не повод ругать. Скажи: "Бывает, вот как скорректировать оставшиеся дни месяца..."
+6. Давай конкретные числа: не "сократи красоту", а "сократив красоту с 23 000 до 15 000 ₽ ты освободишь 8 000 ₽/мес — это 96 000 ₽ в год на накопления".
+7. Если есть цель и свободные средства — посчитай реалистичность: "при текущей норме сбережения X ₽/мес цель достижима за Y месяцев".
+8. Отвечай тепло, кратко (4-6 предложений), на русском. Без воды и общих фраз.`;
 
-    const goals = snap.docs.map(doc => {
-        const { name, targetAmount, currentAmount, deadline } = doc.data();
-        const progress = targetAmount > 0
-            ? Math.round((currentAmount / targetAmount) * 100)
-            : 0;
-        return { name, targetAmount, currentAmount, progress, deadline: deadline ?? null };
-    });
+const INTENT_FOCUS = {
+    budget:            "Сфокусируйся на бюджетах. Отметь превышения (без осуждения) и предложи как скорректировать оставшиеся дни.",
+    savings_goals:     "Сфокусируйся на целях накопления. Оцени реалистичность, посчитай сколько нужно откладывать в месяц, подбодри.",
+    expense_analytics: "Сделай анализ расходов. Выдели слабые места среди дискреционных категорий, дай конкретный совет с цифрами.",
+    income:            "Сфокусируйся на соотношении доходов и расходов, норме сбережения. Дай совет как улучшить баланс.",
+    advice:            "Дай персональный финансовый совет. Опирайся на реальные цифры профиля — что улучшить в первую очередь.",
+    general:           "Ответь на вопрос пользователя, используя данные профиля для персонализации ответа."
+};
 
-    return { isEmpty: false, goals };
-}
-
-// ─── Prompt Builders ───────────────────────────────────────────────────────────
-// Каждый билдер возвращает массив messages для GigaChat API:
-// [{ role: "system", content: инструкция }, { role: "user", content: данные + вопрос }]
-
-function buildExpensePrompt(stats, userMessage) {
-    // Компактный JSON: только category + amount, отсортированные по убыванию трат
-    const breakdown = Object.entries(stats.categories)
-        .sort(([, a], [, b]) => b - a)
-        .map(([category, amount]) => ({ category, amount }));
-
+function buildPrompt(profileText, intent, userMessage) {
+    const focus = INTENT_FOCUS[intent] ?? INTENT_FOCUS.general;
     return [
-        {
-            role: "system",
-            content: "Ты финансовый коуч в мобильном приложении FinCoach. Отвечай кратко, по делу, на русском. Используй цифры из данных пользователя. Дай 1–2 практических совета. Не повторяй вопрос."
-        },
+        { role: "system", content: SYSTEM_PROMPT },
         {
             role: "user",
-            content: `Мои расходы за последний месяц:\n${JSON.stringify({ total: stats.totalExpenses, breakdown })}\n\nВопрос: "${userMessage}"`
+            content: `${profileText}\n\nЗадача коуча: ${focus}\n\nВопрос пользователя: "${userMessage}"`
         }
     ];
 }
 
-function buildGoalsPrompt(goals, userMessage) {
-    return [
-        {
-            role: "system",
-            content: "Ты финансовый коуч в мобильном приложении FinCoach. Отвечай кратко, мотивирующе, на русском. Опирайся на прогресс целей пользователя. Дай 1–2 конкретных совета."
-        },
-        {
-            role: "user",
-            content: `Мои цели накопления:\n${JSON.stringify(goals)}\n\nВопрос: "${userMessage}"`
-        }
-    ];
-}
-
-function buildGeneralPrompt(userMessage) {
-    return [
-        {
-            role: "system",
-            content: "Ты дружелюбный финансовый коуч в мобильном приложении FinCoach. Отвечай кратко, по делу, на русском. Помогай разобраться в личных финансах."
-        },
-        {
-            role: "user",
-            content: userMessage
-        }
-    ];
-}
-
-// Edge case: пользователь без данных — не говорим «нет данных», а мягко направляем
 function buildNewUserPrompt(userMessage) {
     return [
         {
             role: "system",
-            content: "Ты дружелюбный финансовый коуч в мобильном приложении FinCoach. У этого пользователя ещё нет данных о расходах или целях. Мягко поприветствуй его, объясни как начать: добавить первую транзакцию или поставить цель накопления. Отвечай тепло, коротко, на русском."
+            content: "Ты дружелюбный финансовый коуч в приложении FinCoach. У пользователя пока нет данных. Тепло поприветствуй, объясни как начать: добавить первую транзакцию или поставить цель накопления. Кратко, на русском, без воды."
         },
-        {
-            role: "user",
-            content: userMessage
-        }
+        { role: "user", content: userMessage }
     ];
 }
 
-// ─── GigaChat API Call ─────────────────────────────────────────────────────────
+// ─── GigaChat Call ─────────────────────────────────────────────────────────────
 async function callGigaChat(messages) {
     const token = await getGigaToken();
-
     const response = await axios.request({
         method: "post",
         url: "https://gigachat.devices.sberbank.ru/api/v1/chat/completions",
@@ -235,99 +319,65 @@ async function callGigaChat(messages) {
         data: {
             model: "GigaChat",
             messages,
-            temperature: 0.7,
-            max_tokens: 500
+            temperature: 0.6,
+            max_tokens: 600
         },
         httpsAgent: sberAgent,
         timeout: 15000
     });
-
     return response.data.choices[0].message.content;
 }
 
 // ─── Main Cloud Function ───────────────────────────────────────────────────────
 exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
 
-    // ── Safety: Auth check ──────────────────────────────────────────────────
-    // invoker не задан → только аутентифицированные пользователи Firebase
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Необходима авторизация.");
     }
     const userId = request.auth.uid;
 
-    // ── Safety: Input validation ────────────────────────────────────────────
     const userMessage = (request.data.message ?? "").trim();
-
-    if (!userMessage) {
-        throw new HttpsError("invalid-argument", "Сообщение не может быть пустым.");
-    }
+    if (!userMessage) throw new HttpsError("invalid-argument", "Сообщение не может быть пустым.");
     if (userMessage.length > MAX_MESSAGE_LENGTH) {
-        throw new HttpsError(
-            "invalid-argument",
-            `Сообщение слишком длинное. Максимум ${MAX_MESSAGE_LENGTH} символов.`
-        );
+        throw new HttpsError("invalid-argument", `Максимум ${MAX_MESSAGE_LENGTH} символов.`);
     }
 
-    // ── Safety: Rate limiting ───────────────────────────────────────────────
-    // serverTimestamp() гарантирует синхронизацию с сервером Firestore,
-    // а не с локальными часами инстанса Cloud Function.
+    // Rate limiting
     const userRef = db.doc(`users/${userId}`);
     const userSnap = await userRef.get();
     const lastRequestMs = userSnap.data()?.lastAiRequest?.toMillis?.() ?? 0;
-
     if (Date.now() - lastRequestMs < RATE_LIMIT_MS) {
-        throw new HttpsError(
-            "resource-exhausted",
-            "Слишком много запросов. Подождите несколько секунд."
-        );
+        throw new HttpsError("resource-exhausted", "Слишком много запросов. Подождите несколько секунд.");
     }
-
-    // Записываем timestamp асинхронно — не блокируем основной поток ответа
     userRef.set(
         { lastAiRequest: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true }
-    ).catch(err => console.error("Rate limit write error:", err));
+    ).catch(err => console.error("Rate limit write:", err));
 
-    // ── Intent Router ───────────────────────────────────────────────────────
     const intent = detectIntent(userMessage);
-    console.log(`[analyzeFinances] uid=${userId} intent=${intent} msgLen=${userMessage.length}`);
+    console.log(`[1/3] intent="${intent}" uid=${userId}`);
 
-    // ── Context Fetching + Prompt Building ─────────────────────────────────
-    let messages;
-
+    let profile;
     try {
-        if (intent === "expense_analytics") {
-            const context = await getExpenseContext(userId);
-            messages = context.isEmpty
-                ? buildNewUserPrompt(userMessage)
-                : buildExpensePrompt(context.stats, userMessage);
-
-        } else if (intent === "savings_goals") {
-            const context = await getGoalsContext(userId);
-            messages = context.isEmpty
-                ? buildNewUserPrompt(userMessage)
-                : buildGoalsPrompt(context.goals, userMessage);
-
-        } else {
-            // "general" — никаких запросов в Firestore, экономим чтения
-            messages = buildGeneralPrompt(userMessage);
-        }
-    } catch (dbError) {
-        // Firestore недоступен — деградируем к общему промпту, не роняем функцию
-        console.error("Firestore fetch error:", dbError);
-        messages = buildGeneralPrompt(userMessage);
+        profile = await getFinancialProfile(userId);
+        console.log(`[2/3] income=${profile.incomeTotal} expenses=${profile.expenseTotal} cats=${profile.categories.length} goals=${profile.goals.length} budgets=${profile.categories.filter(c => c.budgetLimit !== undefined).length} empty=${profile.isEmpty}`);
+    } catch (err) {
+        console.error("[2/3] fetch error:", err);
+        profile = { isEmpty: true };
     }
 
-    // ── GigaChat Call ───────────────────────────────────────────────────────
-    // Структура ответа одинакова при успехе и при ошибке — iOS-клиент всегда
-    // получит { success: bool, answer: string } и не упадёт при парсинге.
+    const messages = profile.isEmpty
+        ? buildNewUserPrompt(userMessage)
+        : buildPrompt(formatProfile(profile), intent, userMessage);
+
     try {
         const answer = await callGigaChat(messages);
+        console.log(`[3/3] ok len=${answer.length}`);
         return { success: true, answer };
     } catch (error) {
-        console.error("GigaChat error:", error.response?.data ?? error.message);
+        console.error("[3/3] GigaChat error:", error.response?.data ?? error.message);
         return { success: false, answer: GIGACHAT_FALLBACK };
     }
 });
 
-console.log("<------> Cloud Functions loaded <------>");
+console.log("<------> Cloud Functions v2 loaded <------>");

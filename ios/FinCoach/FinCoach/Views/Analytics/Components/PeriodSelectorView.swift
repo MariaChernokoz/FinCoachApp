@@ -19,7 +19,7 @@ struct PeriodSelectorView: View {
                         .foregroundColor(selected == period ? AppColors.blackTextColor : AppColors.grayTextColor)
                         .frame(maxWidth: .infinity)
                         .frame(height: 34)
-                        .background(selected == period ? Color.white : Color.clear)
+                        .background(selected == period ? AppColors.whiteFrameColor : Color.clear)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }

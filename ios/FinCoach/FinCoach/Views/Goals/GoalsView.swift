@@ -193,8 +193,9 @@ struct GoalsView: View {
                     
                     Text(insight.message)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(AppColors.blackTextColor)
+                        .foregroundColor(AppColors.whiteTextColor)
                         .fixedSize(horizontal: false, vertical: true)
+                        .shadow(color: Color.black.opacity(0.2), radius: 4)
                         .padding(.trailing, 16)
                 }
                 .padding(.vertical, 10)
