@@ -18,7 +18,7 @@ struct GoalsView: View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 16) {
                         goalsSection
                         budgetSection
                     }
@@ -87,6 +87,24 @@ struct GoalsView: View {
 
     private var goalsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Цели")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(AppColors.blackTextColor)
+                Spacer()
+                Button {
+                    editingGoal = nil
+                    showGoalEditor = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Добавить")
+                    }
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(AppColors.lightGreenFrameColor)
+                }
+            }
+
             if viewModel.isLoading {
                 HStack {
                     Spacer()
@@ -107,13 +125,13 @@ struct GoalsView: View {
                             onDelete: { viewModel.deleteGoal(goal) }
                         )
                         if goal.id != viewModel.goals.last?.id {
-                            Divider().padding(.leading, 90)
+                            Divider().padding(.leading, 70)
                         }
                     }
                 }
                 .background(AppColors.whiteFrameColor)
-                .clipShape(RoundedRectangle(cornerRadius: 22))
-                .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
             }
         }
     }
@@ -138,16 +156,16 @@ struct GoalsView: View {
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 48)
+                    .frame(height: 50)
                     .background(AppColors.lightGreenFrameColor)
-                    .cornerRadius(14)
+                    .cornerRadius(16)
             }
         }
         .padding(24)
         .frame(maxWidth: .infinity)
         .background(AppColors.whiteFrameColor)
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
-        .cornerRadius(22)
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+        .cornerRadius(16)
     }
 
     // MARK: - Budget section
@@ -191,13 +209,13 @@ struct GoalsView: View {
                             onDelete: { viewModel.deleteBudget(budget) }
                         )
                         if budget.id != viewModel.budgets.last?.id {
-                            Divider().padding(.leading, 82)
+                            Divider().padding(.leading, 70)
                         }
                     }
                 }
                 .background(AppColors.whiteFrameColor)
-                .clipShape(RoundedRectangle(cornerRadius: 22))
-                .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
             }
         }
     }
@@ -222,16 +240,16 @@ struct GoalsView: View {
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 48)
+                    .frame(height: 50)
                     .background(AppColors.lightGreenFrameColor)
-                    .cornerRadius(14)
+                    .cornerRadius(16)
             }
         }
         .padding(24)
         .frame(maxWidth: .infinity)
         .background(AppColors.whiteFrameColor)
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
-        .cornerRadius(22)
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+        .cornerRadius(16)
     }
 }
 

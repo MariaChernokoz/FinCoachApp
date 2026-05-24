@@ -20,7 +20,7 @@ struct DonutChartView: View {
     private var chartTotal: Double { chartBreakdown.reduce(0) { $0 + $1.amount } }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("Расходы по категориям")
                     .font(.system(size: 18, weight: .semibold))
@@ -33,80 +33,82 @@ struct DonutChartView: View {
                 }
             }
 
-            ZStack {
-                if chartBreakdown.isEmpty {
-                    Circle()
-                        .stroke(AppColors.lightGrayFrameColor, lineWidth: 20)
-                        .frame(height: 210)
-                } else {
-                    Chart(chartBreakdown) { item in
-                        SectorMark(
-                            angle: .value("Сумма", item.amount),
-                            innerRadius: .ratio(0.58),
-                            angularInset: 1.5
-                        )
-                        .cornerRadius(4)
-                        .foregroundStyle(item.color)
-                    }
-                    .frame(height: 210)
-                }
-
-                VStack(spacing: 2) {
-                    Text(hasFilter ? "Выбрано" : "Итого")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(AppColors.grayTextColor)
-                    Text(formatted(chartTotal))
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(AppColors.blackTextColor)
-                        .minimumScaleFactor(0.6)
-                        .lineLimit(1)
-                        .frame(maxWidth: 110)
-                }
-            }
-
-            VStack(spacing: 0) {
-                ForEach(Array(visibleLegendItems.enumerated()), id: \.element.id) { index, item in
-                    let excluded = excludedCategories.contains(item.category)
-
-                    legendRow(item, excluded: excluded)
-                        .opacity(excluded ? 0.38 : 1)
-                        .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { onToggle(item.category) } }
-
-                    if index < visibleLegendItems.count - 1 {
-                        Divider()
-                    }
-                }
-
-                if hasMore {
-                    Divider()
-                    Button(action: onShowAll) {
-                        HStack(spacing: 4) {
-                            Text("Все категории")
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .semibold))
+            VStack(alignment: .leading, spacing: 16) {
+                ZStack {
+                    if chartBreakdown.isEmpty {
+                        Circle()
+                            .stroke(AppColors.lightGrayFrameColor, lineWidth: 10)
+                            .frame(height: 210)
+                    } else {
+                        Chart(chartBreakdown) { item in
+                            SectorMark(
+                                angle: .value("Сумма", item.amount),
+                                innerRadius: .ratio(0.72),
+                                angularInset: 1.5
+                            )
+                            .cornerRadius(4)
+                            .foregroundStyle(item.color)
                         }
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(AppColors.lightGreenFrameColor)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .frame(height: 210)
+                    }
+
+                    VStack(spacing: 2) {
+                        Text(hasFilter ? "Выбрано" : "Итого")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(AppColors.grayTextColor)
+                        Text(formatted(chartTotal))
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(AppColors.blackTextColor)
+                            .minimumScaleFactor(0.6)
+                            .lineLimit(1)
+                            .frame(maxWidth: 110)
                     }
                 }
-            }
 
-            if hasFilter {
-                Text("Нажмите на категорию чтобы включить / исключить")
-                    .font(.system(size: 11))
-                    .foregroundColor(AppColors.grayTextColor)
-            } else {
-                Text("Нажмите на категорию чтобы исключить её")
-                    .font(.system(size: 11))
-                    .foregroundColor(AppColors.grayTextColor)
+                VStack(spacing: 0) {
+                    ForEach(Array(visibleLegendItems.enumerated()), id: \.element.id) { index, item in
+                        let excluded = excludedCategories.contains(item.category)
+
+                        legendRow(item, excluded: excluded)
+                            .opacity(excluded ? 0.38 : 1)
+                            .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { onToggle(item.category) } }
+
+                        if index < visibleLegendItems.count - 1 {
+                            Divider()
+                        }
+                    }
+
+                    if hasMore {
+                        Divider()
+                        Button(action: onShowAll) {
+                            HStack(spacing: 4) {
+                                Text("Все категории")
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                            }
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppColors.lightGreenFrameColor)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                        }
+                    }
+                }
+
+                if hasFilter {
+                    Text("Нажмите на категорию чтобы включить / исключить")
+                        .font(.system(size: 11))
+                        .foregroundColor(AppColors.grayTextColor)
+                } else {
+                    Text("Нажмите на категорию чтобы исключить её")
+                        .font(.system(size: 11))
+                        .foregroundColor(AppColors.grayTextColor)
+                }
             }
+            .padding(20)
+            .background(AppColors.whiteFrameColor)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+            .cornerRadius(16)
         }
-        .padding(20)
-        .background(AppColors.whiteFrameColor)
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
-        .cornerRadius(22)
         .animation(.easeInOut(duration: 0.25), value: excludedCategories)
     }
 

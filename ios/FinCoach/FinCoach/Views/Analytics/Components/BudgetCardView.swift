@@ -18,7 +18,7 @@ struct BudgetCardView: View {
         HStack(spacing: 16) {
             Circle()
                 .fill(AppColors.lightGreenFrameColor.opacity(0.65))
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .overlay(
                     Image(systemName: categoryIcon)
                         .font(.system(size: 18, weight: .semibold))
@@ -28,7 +28,7 @@ struct BudgetCardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(categoryTitle)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(AppColors.blackTextColor)
                         .lineLimit(1)
                     Spacer()

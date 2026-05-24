@@ -54,7 +54,7 @@ struct QuoteOfTheDayView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
         .background(AppColors.lightGreenFrameColor)
-        .cornerRadius(22)
+        .cornerRadius(16)
     }
 }
 

@@ -41,13 +41,13 @@ struct CategoryDetailView: View {
                     ZStack {
                         if chartBreakdown.isEmpty {
                             Circle()
-                                .stroke(AppColors.lightGrayFrameColor, lineWidth: 20)
+                                .stroke(AppColors.lightGrayFrameColor, lineWidth: 10)
                                 .frame(height: 220)
                         } else {
                             Chart(chartBreakdown) { item in
                                 SectorMark(
                                     angle: .value("Сумма", item.amount),
-                                    innerRadius: .ratio(0.58),
+                                    innerRadius: .ratio(0.72),
                                     angularInset: 1.5
                                 )
                                 .cornerRadius(4)
@@ -88,10 +88,10 @@ struct CategoryDetailView: View {
                                     .frame(width: 12, height: 12)
                                 Circle()
                                     .fill(item.color.opacity(excluded ? 0.07 : 0.15))
-                                    .frame(width: 36, height: 36)
+                                    .frame(width: 40, height: 40)
                                     .overlay(
                                         Image(systemName: item.icon)
-                                            .font(.system(size: 14, weight: .semibold))
+                                            .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(excluded ? AppColors.grayTextColor : item.color)
                                     )
                                 VStack(alignment: .leading, spacing: 2) {
@@ -121,20 +121,20 @@ struct CategoryDetailView: View {
                             }
 
                             if index < allBreakdown.count - 1 {
-                                Divider().padding(.leading, 82)
+                                Divider().padding(.leading, 70)
                             }
                         }
                     }
                     .background(AppColors.whiteFrameColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
-                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
                     .padding(.horizontal, 20)
                     .animation(.easeInOut(duration: 0.25), value: excludedCategories)
                 }
                 .padding(.top, 16)
                 .padding(.bottom, 32)
             }
-            .background(Color(.systemBackground))
+            .background(AppColors.backgroundGray)
             .navigationTitle("Все категории")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

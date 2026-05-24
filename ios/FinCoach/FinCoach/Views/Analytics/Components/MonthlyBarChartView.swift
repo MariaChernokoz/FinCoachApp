@@ -59,8 +59,8 @@ struct MonthlyBarChartView: View {
         }
         .padding(20)
         .background(AppColors.whiteFrameColor)
-        .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
-        .cornerRadius(22)
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+        .cornerRadius(16)
     }
 
     private func legendDot(color: Color, label: String) -> some View {

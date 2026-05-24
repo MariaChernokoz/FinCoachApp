@@ -25,7 +25,7 @@ struct TransactionRowView: View {
 
             VStack(alignment: .leading, spacing: 7) {
                 Text(transaction.title)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppColors.blackTextColor)
                     .lineLimit(1)
 
@@ -45,7 +45,7 @@ struct TransactionRowView: View {
 
             VStack(alignment: .trailing, spacing: 7) {
                 Text(amountText)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(transaction.isIncome ? AppColors.darkGreenFrameColor : AppColors.blackTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)

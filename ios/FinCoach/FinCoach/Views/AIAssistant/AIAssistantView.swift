@@ -58,10 +58,10 @@ struct AIAssistantView: View {
                         .font(.system(size: 15))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
-                        .background(Color.white)
-                        .cornerRadius(20)
+                        .background(AppColors.whiteFrameColor)
+                        .cornerRadius(16)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 20)
+                            RoundedRectangle(cornerRadius: 16)
                                 .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
                         )
                         .lineLimit(1...5)
@@ -75,7 +75,7 @@ struct AIAssistantView: View {
                             .font(.system(size: 32))
                             .foregroundColor(
                                 messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                ? .gray : AppColors.lightGreenFrameColor
+                                ? AppColors.grayTextColor : AppColors.lightGreenFrameColor
                             )
                     }
                     .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isLoading)
@@ -121,9 +121,9 @@ struct MessageBubble: View {
                 Text(message.text)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(message.isUser ? AppColors.lightGreenFrameColor : Color.white)
+                    .background(message.isUser ? AppColors.lightGreenFrameColor : AppColors.whiteFrameColor)
                     .foregroundColor(message.isUser ? .white : .primary)
-                    .cornerRadius(18)
+                    .cornerRadius(16)
                     .shadow(
                         color: message.isUser ? .clear : Color.black.opacity(0.07),
                         radius: 4, x: 0, y: 2
@@ -131,7 +131,7 @@ struct MessageBubble: View {
 
                 Text(formatTime(message.timestamp))
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(AppColors.grayTextColor)
                     .padding(.horizontal, 4)
             }
 
@@ -154,7 +154,7 @@ struct TypingIndicator: View {
         HStack(spacing: 4) {
             ForEach(0..<3) { index in
                 Circle()
-                    .fill(Color.gray.opacity(0.5))
+                    .fill(AppColors.grayTextColor.opacity(0.5))
                     .frame(width: 8, height: 8)
                     .scaleEffect(animating ? 1.0 : 0.5)
                     .animation(
@@ -167,8 +167,8 @@ struct TypingIndicator: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color.white)
-        .cornerRadius(18)
+        .background(AppColors.whiteFrameColor)
+        .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.07), radius: 4, x: 0, y: 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
@@ -217,8 +217,8 @@ struct ExampleQuestionsView: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
-                    .background(Color.white)
-                    .cornerRadius(14)
+                    .background(AppColors.whiteFrameColor)
+                    .cornerRadius(16)
                     .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 1)
                 }
             }

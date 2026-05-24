@@ -189,7 +189,7 @@ struct TransactionsView: View {
             .padding(.bottom, 10)
         }
         .background(AppColors.whiteFrameColor)
-        .cornerRadius(22)
+        .cornerRadius(16)
         .clipped(antialiased: false)
     }
 
@@ -234,14 +234,14 @@ struct TransactionsView: View {
 
                                 if transaction.id != section.transactions.last?.id {
                                     Divider()
-                                        .padding(.leading, 66)
+                                        .padding(.leading, 70)
                                 }
                             }
                         }
                         .background(AppColors.whiteFrameColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 22)
+                            RoundedRectangle(cornerRadius: 16)
                                 .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
                         )
                     }
