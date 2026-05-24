@@ -60,7 +60,11 @@ struct AnalyticsSummaryCards: View {
         .cornerRadius(22)
     }
 
-    private func card(title: String, amount: Double, color: Color) -> some View {
+    private func metricColumn(title: String, amount: Double) -> some View {
+        card(title: title, amount: amount)
+    }
+
+    private func card(title: String, amount: Double) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(LocalizedStringKey(title))
                 .font(.system(size: 12, weight: .regular))

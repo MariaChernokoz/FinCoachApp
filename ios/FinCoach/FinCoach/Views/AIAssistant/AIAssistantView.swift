@@ -90,11 +90,7 @@ struct AIAssistantView: View {
             .background(AppColors.backgroundColor)
             .navigationTitle("Финансовый ассистент")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                if let userId = authViewModel.currentUser?.uid {
-                    viewModel.start(userId: userId)
-                }
-            }
+            .onAppear { }
             .onChange(of: navigationState.pendingAIMessage) { message in
                 guard let message else { return }
                 navigationState.pendingAIMessage = nil
@@ -130,7 +126,7 @@ struct MessageBubble: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
                     .background(message.isUser ? AppColors.lightGreenFrameColor : AppColors.whiteFrameColor)
-                    .foregroundColor(message.isUser ? .white : .primary)
+                    .foregroundColor(message.isUser ? AppColors.whiteTextColor : AppColors.blackTextColor)
                     .cornerRadius(16)
                     .shadow(
                         color: message.isUser ? .clear : Color.black.opacity(0.07),
