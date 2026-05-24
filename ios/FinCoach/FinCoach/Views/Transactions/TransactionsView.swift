@@ -188,7 +188,7 @@ struct TransactionsView: View {
             .padding(.top, 8)
             .padding(.bottom, 10)
         }
-        .background(AppColors.lightGreenFrameColor)
+        .background(AppColors.whiteFrameColor)
         .cornerRadius(22)
         .clipped(antialiased: false)
     }

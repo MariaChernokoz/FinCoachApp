@@ -15,7 +15,7 @@ struct OverflowMetricCard: View {
     var body: some View {
         ZStack(alignment: .top) {
             VStack(spacing: 4) {
-                Spacer().frame(height: 52)
+                Spacer().frame(height: 28)
                 Text(currency(amount))
                     .font(.system(size: 17, weight: .bold))
                     .foregroundColor(AppColors.blackTextColor)
@@ -27,7 +27,7 @@ struct OverflowMetricCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(AppColors.whiteFrameColor)
+            .background(AppColors.backgroundGray)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
@@ -39,7 +39,7 @@ struct OverflowMetricCard: View {
                 .renderingMode(.original)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 96, height: 96)
+                .frame(width: 66, height: 66)
         }
     }
 
@@ -51,4 +51,13 @@ struct OverflowMetricCard: View {
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: amount)) ?? "\(amount)"
     }
+}
+
+#Preview {
+    HStack(spacing: 16) {
+        OverflowMetricCard(title: "Расходы", amount: 45200, imageName: "money")
+        OverflowMetricCard(title: "Доходы", amount: 120000, imageName: "pig")
+    }
+    .padding()
+    .background(AppColors.whiteFrameColor)
 }

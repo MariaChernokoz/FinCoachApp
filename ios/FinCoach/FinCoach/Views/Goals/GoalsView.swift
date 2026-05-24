@@ -44,7 +44,8 @@ struct GoalsView: View {
                 .padding(.trailing, 24)
                 .padding(.bottom, 24)
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Цели и бюджеты")
+            .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 if let userId = authViewModel.currentUser?.uid {
                     viewModel.start(userId: userId)
@@ -86,10 +87,6 @@ struct GoalsView: View {
 
     private var goalsSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Финансовые цели")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(AppColors.blackTextColor)
-
             if viewModel.isLoading {
                 HStack {
                     Spacer()
