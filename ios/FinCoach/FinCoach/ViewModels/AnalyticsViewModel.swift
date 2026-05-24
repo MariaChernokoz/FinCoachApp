@@ -50,7 +50,6 @@ struct MonthlyPoint: Identifiable {
 final class AnalyticsViewModel: ObservableObject {
     @Published private(set) var transactions: [Transaction] = []
     @Published private(set) var categories: [Category] = []
-    @Published private(set) var budgets: [Budget] = []
     @Published var period: AnalyticsPeriod = .month
     @Published var excludedChartCategories: Set<String> = []
     @Published var isLoading = false
@@ -59,7 +58,6 @@ final class AnalyticsViewModel: ObservableObject {
 
     private let transactionsService = TransactionsService()
     private let categoriesService = CategoriesService()
-    private let budgetService = BudgetService()
     private var userId: String?
 
     // MARK: - Period aggregates
@@ -170,32 +168,6 @@ final class AnalyticsViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Budget helpers
-
-    func category(for budget: Budget) -> Category? {
-        categories.first { $0.id == budget.categoryId || $0.title == budget.categoryId }
-    }
-
-    func currentMonthSpent(for budget: Budget) -> Double {
-        let cal = Calendar.current
-        let now = Date()
-        let cat = category(for: budget)
-        return transactions
-            .filter { !$0.isIncome && cal.isDate($0.date, equalTo: now, toGranularity: .month) }
-            .filter { transaction in
-                if let cat {
-                    return transaction.category == cat.id || transaction.category == cat.title
-                }
-                return transaction.category == budget.categoryId
-            }
-            .reduce(0) { $0 + $1.amount }
-    }
-
-    func spentFraction(for budget: Budget) -> Double {
-        guard budget.limitAmount > 0 else { return 0 }
-        return min(currentMonthSpent(for: budget) / budget.limitAmount, 1.0)
-    }
-
     // MARK: - Lifecycle
 
     func start(userId: String) {
@@ -212,61 +184,12 @@ final class AnalyticsViewModel: ObservableObject {
         defer { isLoading = false }
         async let txns = transactionsService.fetchTransactions(userId: userId)
         async let cats = categoriesService.fetchCategories()
-        async let bdgs = budgetService.fetchBudgets(userId: userId)
         do {
-            let (t, c, b) = try await (txns, cats, bdgs)
+            let (t, c) = try await (txns, cats)
             transactions = t
             categories   = c
-            budgets      = b
         } catch {
             presentError(error.localizedDescription)
-        }
-    }
-
-    // MARK: - Budget CRUD
-
-    func saveBudget(existing: Budget?, categoryId: String, limitAmount: Double) async {
-        guard let userId else { return }
-        let now = Int64(Date().timeIntervalSince1970 * 1000)
-        let cal = Calendar.current
-        let periodStart = Int64(
-            (cal.date(from: cal.dateComponents([.year, .month], from: Date())) ?? Date())
-                .timeIntervalSince1970 * 1000
-        )
-        let budget = Budget(
-            id: existing?.id ?? UUID().uuidString,
-            userId: userId,
-            categoryId: categoryId,
-            limitAmount: limitAmount,
-            currentSpent: existing?.currentSpent ?? 0,
-            period: "month",
-            periodStart: existing?.periodStart ?? periodStart,
-            updatedAt: now
-        )
-        do {
-            if existing == nil {
-                try await budgetService.create(budget)
-                budgets.append(budget)
-            } else {
-                try await budgetService.update(budget)
-                if let i = budgets.firstIndex(where: { $0.id == budget.id }) {
-                    budgets[i] = budget
-                }
-            }
-        } catch {
-            presentError(error.localizedDescription)
-        }
-    }
-
-    func deleteBudget(_ budget: Budget) {
-        budgets.removeAll { $0.id == budget.id }
-        Task {
-            do {
-                try await budgetService.delete(budget)
-            } catch {
-                presentError(error.localizedDescription)
-                await load()
-            }
         }
     }
 

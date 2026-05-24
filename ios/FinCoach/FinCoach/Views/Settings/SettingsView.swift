@@ -44,7 +44,10 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 8)
                 } header: {
-                    Text("ПРОФИЛЬ")
+                    Text("Профиль")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.blackTextColor)
+                        .textCase(nil)
                 }
                 
                 Section {
@@ -58,6 +61,10 @@ struct SettingsView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(AppColors.backgroundGray)
+            .navigationTitle("Настройки")
+            .navigationBarTitleDisplayMode(.inline)
             .alert("Вы уверены, что хотите выйти?", isPresented: $showSignOutConfirmation) {
                 Button("Выйти", role: .destructive) {
                     authViewModel.signOut()

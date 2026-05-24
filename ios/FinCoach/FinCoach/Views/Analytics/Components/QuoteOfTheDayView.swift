@@ -35,33 +35,34 @@ struct QuoteOfTheDayView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 4) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(AppColors.lightGreenFrameColor)
-                Text("Мотивация дня")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppColors.lightGreenFrameColor)
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 4) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppColors.grayTextColor)
+                    Text("Мотивация дня")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(AppColors.grayTextColor)
+                }
+                
+                Text(quote)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(AppColors.blackTextColor)
+                    .fixedSize(horizontal: false, vertical: true)
+                //.shadow(color: Color.black.opacity(0.07), radius: 4, x: 0, y: 2) //masha
             }
-
-            Text(quote)
-                .font(.system(size: 15, weight: .regular))
-                .italic()
-                .foregroundColor(AppColors.blackTextColor)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 10)
+            Spacer()
+            Image("pig_assistant")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 70, height: 70)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 18)
-        .background(AppColors.whiteFrameColor)
-        .cornerRadius(22)
-        .overlay(
-            RoundedRectangle(cornerRadius: 22)
-                .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
-        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(AppColors.lightGreenFrameColor)
+        .cornerRadius(16)
     }
 }
 

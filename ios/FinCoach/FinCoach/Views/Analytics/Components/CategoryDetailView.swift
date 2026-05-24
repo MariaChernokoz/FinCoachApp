@@ -41,19 +41,19 @@ struct CategoryDetailView: View {
                     ZStack {
                         if chartBreakdown.isEmpty {
                             Circle()
-                                .stroke(AppColors.lightGrayFrameColor, lineWidth: 20)
-                                .frame(height: 220)
+                                .stroke(AppColors.lightGrayFrameColor, lineWidth: 8)
+                                .frame(height: 180)
                         } else {
                             Chart(chartBreakdown) { item in
                                 SectorMark(
                                     angle: .value("Сумма", item.amount),
-                                    innerRadius: .ratio(0.58),
+                                    innerRadius: .ratio(0.75),
                                     angularInset: 1.5
                                 )
                                 .cornerRadius(4)
                                 .foregroundStyle(item.color)
                             }
-                            .frame(height: 220)
+                            .frame(height: 180)
                         }
 
                         VStack(spacing: 2) {
@@ -61,11 +61,11 @@ struct CategoryDetailView: View {
                                 .font(.system(size: 12, weight: .regular))
                                 .foregroundColor(AppColors.grayTextColor)
                             Text(formatted(chartTotal))
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(AppColors.blackTextColor)
                                 .minimumScaleFactor(0.6)
                                 .lineLimit(1)
-                                .frame(maxWidth: 110)
+                                .frame(maxWidth: 100)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -82,38 +82,35 @@ struct CategoryDetailView: View {
                         ForEach(Array(allBreakdown.enumerated()), id: \.element.id) { index, item in
                             let excluded = excludedCategories.contains(item.category)
 
-                            HStack(spacing: 14) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(excluded ? Color(.systemGray4) : item.color)
-                                    .frame(width: 12, height: 12)
+                            HStack(spacing: 12) {
                                 Circle()
-                                    .fill(item.color.opacity(excluded ? 0.07 : 0.15))
+                                    .fill(excluded ? AppColors.lightGrayFrameColor.opacity(0.3) : AppColors.lightGreenFrameColor)
                                     .frame(width: 36, height: 36)
+                                    .overlay(Circle().stroke(excluded ? Color.clear : item.color, lineWidth: 5))
                                     .overlay(
                                         Image(systemName: item.icon)
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundColor(excluded ? AppColors.grayTextColor : item.color)
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundColor(excluded ? AppColors.grayTextColor : AppColors.darkGrayFrameColor)
                                     )
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(item.category)
-                                        .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(AppColors.blackTextColor)
-                                        .strikethrough(excluded, color: AppColors.grayTextColor)
-                                    if !excluded {
-                                        Text(String(format: "%.1f%%", item.percentage))
-                                            .font(.system(size: 12))
-                                            .foregroundColor(AppColors.grayTextColor)
-                                    }
-                                }
+                                Text(item.category)
+                                    .font(.system(size: 15, weight: .regular))
+                                    .foregroundColor(AppColors.blackTextColor)
+                                    .lineLimit(1)
+                                    .strikethrough(excluded, color: AppColors.grayTextColor)
                                 Spacer()
                                 if !excluded {
+                                    Text(String(format: "%.1f%%", item.percentage))
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundColor(AppColors.grayTextColor)
+                                        .frame(width: 44, alignment: .trailing)
                                     Text(formatted(item.amount))
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(AppColors.blackTextColor)
+                                        .frame(minWidth: 80, alignment: .trailing)
                                 }
                             }
                             .padding(.horizontal, 20)
-                            .padding(.vertical, 14)
+                            .padding(.vertical, 12)
                             .opacity(excluded ? 0.4 : 1)
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -121,20 +118,20 @@ struct CategoryDetailView: View {
                             }
 
                             if index < allBreakdown.count - 1 {
-                                Divider().padding(.leading, 82)
+                                Divider().padding(.leading, 70)
                             }
                         }
                     }
                     .background(AppColors.whiteFrameColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 22))
-                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
                     .padding(.horizontal, 20)
                     .animation(.easeInOut(duration: 0.25), value: excludedCategories)
                 }
                 .padding(.top, 16)
                 .padding(.bottom, 32)
             }
-            .background(Color(.systemBackground))
+            .background(AppColors.backgroundGray)
             .navigationTitle("Все категории")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

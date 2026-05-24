@@ -40,7 +40,7 @@ struct TransactionsView: View {
                         .frame(width: 58, height: 58)
                         .background(AppColors.lightGreenFrameColor)
                         .clipShape(Circle())
-                        .shadow(color: AppColors.lightGreenFrameColor.opacity(0.35), radius: 14, x: 0, y: 8)
+//                        .shadow(color: AppColors.lightGreenFrameColor.opacity(0.35), radius: 14, x: 0, y: 8)
                 }
                 .padding(.trailing, 24)
                 .padding(.bottom, 24)
@@ -85,7 +85,7 @@ struct TransactionsView: View {
                     .font(.system(size: 16))
                     .foregroundColor(AppColors.grayTextColor)
                 TextField("Поиск транзакций", text: $viewModel.searchText)
-                    .font(.system(size: 16))
+                    .font(.system(size: 15))
                     .foregroundColor(AppColors.blackTextColor)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
@@ -156,23 +156,23 @@ struct TransactionsView: View {
     private var balanceCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("Total Balance")
+                Text("Баланс")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(AppColors.grayTextColor)
-                    .padding(.bottom, 12)
+                    //.padding(.bottom, 6)
 
                 Spacer()
 
                 Text(formatAmount(viewModel.filteredBalance, showSign: false))
-                    .font(.system(size: 34, weight: .bold))
+                    .font(.system(size: 25, weight: .bold))
                     .foregroundColor(AppColors.blackTextColor)
                     .minimumScaleFactor(0.7)
                     .lineLimit(1)
             }
             .padding(.horizontal, 20)
-            .padding(.top, 18)
+            .padding(.top, 16)
 
-            HStack(spacing: 16) {
+            HStack(spacing: 30) {
                 OverflowMetricCard(
                     title: "Расходы",
                     amount: viewModel.filteredExpense,
@@ -184,12 +184,12 @@ struct TransactionsView: View {
                     imageName: "pig"
                 )
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 10)
+            .padding(.horizontal, 32)
+            //.padding(.top, 8)
+            .padding(.bottom, 12)
         }
         .background(AppColors.lightGreenFrameColor)
-        .cornerRadius(22)
+        .cornerRadius(16)
         .clipped(antialiased: false)
     }
 
@@ -234,14 +234,14 @@ struct TransactionsView: View {
 
                                 if transaction.id != section.transactions.last?.id {
                                     Divider()
-                                        .padding(.leading, 66)
+                                        .padding(.leading, 70)
                                 }
                             }
                         }
                         .background(AppColors.whiteFrameColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 22)
+                            RoundedRectangle(cornerRadius: 16)
                                 .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
                         )
                     }

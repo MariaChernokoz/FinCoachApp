@@ -45,9 +45,9 @@ struct EmptyTransactionsView: View {
         .frame(maxWidth: .infinity)
         .background(AppColors.whiteFrameColor)
         .overlay(
-            RoundedRectangle(cornerRadius: 22)
+            RoundedRectangle(cornerRadius: 16)
                 .stroke(AppColors.lightGrayFrameColor, lineWidth: 1)
         )
-        .cornerRadius(22)
+        .cornerRadius(16)
     }
 }
