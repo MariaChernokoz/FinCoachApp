@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct AIAssistantView: View {
     @StateObject private var viewModel = AIAssistantViewModel()
+    @EnvironmentObject private var authViewModel: AuthViewModel
     @EnvironmentObject private var navigationState: AppNavigationState
     @State private var messageText = ""
     @FocusState private var isInputFocused: Bool
@@ -20,6 +22,7 @@ struct AIAssistantView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 4)
+                    .background(AppColors.backgroundGray)
 
                 // MARK: - Chat Messages
 
@@ -87,6 +90,11 @@ struct AIAssistantView: View {
             .background(AppColors.backgroundGray)
             .navigationTitle("Финансовый ассистент")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                if let userId = authViewModel.currentUser?.uid {
+                    viewModel.start(userId: userId)
+                }
+            }
             .onChange(of: navigationState.pendingAIMessage) { message in
                 guard let message else { return }
                 navigationState.pendingAIMessage = nil
@@ -228,5 +236,6 @@ struct ExampleQuestionsView: View {
 
 #Preview {
     AIAssistantView()
+        .environmentObject(AuthViewModel())
         .environmentObject(AppNavigationState())
 }

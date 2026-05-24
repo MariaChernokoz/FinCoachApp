@@ -4,7 +4,7 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Белый знак рубля по центру (Material currency_ruble) -->
+    <!-- Белый знак рубля по центру -->
     <group
         android:translateX="19.5"
         android:translateY="18"

@@ -2,10 +2,25 @@ package com.example.fincoach.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// ── Светлая тема ──────────────────────────────────────────────────────────────
+val White        = Color(0xFFFFFFFF)
+val BgLightGray  = Color(0xFFEEEEEF)
+val DarkGray     = Color(0xFF515151)
+val NearBlack    = Color(0xFF1F1F1F)
+val BorderGray   = Color(0xFFE0E0E0)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Акценты
+val BrightGreen  = Color(0xFFB5E731)
+val DeepGreen    = Color(0xFF77D43C)
+val PurpleAccent = Color(0xFF8D57D5)
+val LightLime    = Color(0xFFD0EE6D)
+
+// Текст (светлая тема)
+val TextBlack       = Color(0xFF000000)
+val TextDarkGray    = Color(0xFF393939)
+val TextGray        = Color(0xFF7C7C7C)
+val TextPlaceholder = Color(0xFFCED0D1)
+
+// ── Тёмная тема ───────────────────────────────────────────────────────────────
+val DarkSurface  = Color(0xFF2C2C2E)   // карточки в тёмной теме
+val DarkTextGray = Color(0xFF8E8E93)   // вторичный текст в тёмной теме
