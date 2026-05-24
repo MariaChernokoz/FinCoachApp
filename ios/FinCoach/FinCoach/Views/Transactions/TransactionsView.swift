@@ -29,7 +29,7 @@ struct TransactionsView: View {
                     .padding(.bottom, 96)
                 }
                 .refreshable { await viewModel.loadTransactions() }
-                .background(AppColors.backgroundGray)
+                .background(AppColors.backgroundColor)
 
                 Button {
                     editorRoute = TransactionEditorRoute(transaction: nil)

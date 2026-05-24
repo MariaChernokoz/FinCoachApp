@@ -10,7 +10,23 @@ import FirebaseAuth
 
 struct SettingsView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @AppStorage("appColorScheme") private var colorScheme: String = "system"
+    @AppStorage("appLanguage") private var language: String = "ru"
     @State private var showSignOutConfirmation = false
+    @State private var showThemePicker = false
+    @State private var showLanguagePicker = false
+
+    private var themeLabel: String {
+        switch colorScheme {
+        case "light": return "Светлая"
+        case "dark":  return "Тёмная"
+        default:      return "Системная"
+        }
+    }
+
+    private var languageLabel: String {
+        language == "en" ? "English" : "Русский"
+    }
     
     var body: some View {
         NavigationStack {
@@ -18,13 +34,7 @@ struct SettingsView: View {
                 Section {
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppColors.lightGreenFrameColor, AppColors.darkGreenFrameColor],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(AppColors.lightGreenFrameColor)
                             .frame(width: 60, height: 60)
                             .overlay(
                                 Text(getInitials())
@@ -34,12 +44,9 @@ struct SettingsView: View {
                             )
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(authViewModel.currentUser?.displayName ?? "Пользователь")
-                                .font(.headline)
-                            
                             Text(authViewModel.currentUser?.email ?? "")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .font(.headline)
+                                .foregroundColor(AppColors.grayTextColor)
                         }
                     }
                     .padding(.vertical, 8)
@@ -50,6 +57,60 @@ struct SettingsView: View {
                         .textCase(nil)
                 }
                 
+                Section {
+                    Button {
+                        showThemePicker = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "moon.fill")
+                                .foregroundColor(AppColors.lightGreenFrameColor)
+                                .frame(width: 28)
+                            Text("Тема")
+                                .foregroundColor(AppColors.blackTextColor)
+                            Spacer()
+                            Text(themeLabel)
+                                .foregroundColor(AppColors.grayTextColor)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(AppColors.lightGrayFrameColor)
+                        }
+                    }
+                    .confirmationDialog("Выберите тему", isPresented: $showThemePicker, titleVisibility: .visible) {
+                        Button("Системная") { colorScheme = "system" }
+                        Button("Светлая")   { colorScheme = "light" }
+                        Button("Тёмная")    { colorScheme = "dark" }
+                        Button("Отмена", role: .cancel) { }
+                    }
+
+                    Button {
+                        showLanguagePicker = true
+                    } label: {
+                        HStack {
+                            Image(systemName: "globe")
+                                .foregroundColor(AppColors.lightGreenFrameColor)
+                                .frame(width: 28)
+                            Text("Язык")
+                                .foregroundColor(AppColors.blackTextColor)
+                            Spacer()
+                            Text(languageLabel)
+                                .foregroundColor(AppColors.grayTextColor)
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(AppColors.lightGrayFrameColor)
+                        }
+                    }
+                    .confirmationDialog("Выберите язык", isPresented: $showLanguagePicker, titleVisibility: .visible) {
+                        Button("Русский") { language = "ru" }
+                        Button("English") { language = "en" }
+                        Button("Отмена", role: .cancel) { }
+                    }
+                } header: {
+                    Text("Приложение")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(AppColors.blackTextColor)
+                        .textCase(nil)
+                }
+
                 Section {
                     Button(role: .destructive) {
                         showSignOutConfirmation = true
@@ -62,7 +123,7 @@ struct SettingsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
-            .background(AppColors.backgroundGray)
+            .background(AppColors.backgroundColor)
             .navigationTitle("Настройки")
             .navigationBarTitleDisplayMode(.inline)
             .alert("Вы уверены, что хотите выйти?", isPresented: $showSignOutConfirmation) {

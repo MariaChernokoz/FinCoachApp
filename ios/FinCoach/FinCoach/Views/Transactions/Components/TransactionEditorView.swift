@@ -74,7 +74,7 @@ struct TransactionEditorView: View {
                     }
                 }
             }
-            .navigationTitle(transaction == nil ? "Новая операция" : "Редактирование")
+            .navigationTitle(LocalizedStringKey(transaction == nil ? "Новая операция" : "Редактирование"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

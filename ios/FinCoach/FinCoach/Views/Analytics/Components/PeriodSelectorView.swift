@@ -14,7 +14,7 @@ struct PeriodSelectorView: View {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { selected = period }
                 } label: {
-                    Text(period.rawValue)
+                    Text(LocalizedStringKey(period.rawValue))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(selected == period ? AppColors.blackTextColor : AppColors.grayTextColor)
                         .frame(maxWidth: .infinity)

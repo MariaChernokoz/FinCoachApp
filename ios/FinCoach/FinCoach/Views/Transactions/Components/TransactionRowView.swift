@@ -34,7 +34,7 @@ struct TransactionRowView: View {
                         .fill(AppColors.lightGreenFrameColor)
                         .frame(width: 8, height: 8)
 
-                    Text(categoryTitle)
+                    Text(LocalizedStringKey(categoryTitle))
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(AppColors.grayTextColor)
                         .lineLimit(1)

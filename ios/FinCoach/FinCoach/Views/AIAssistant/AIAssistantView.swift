@@ -37,7 +37,7 @@ struct AIAssistantView: View {
                         }
                         .padding()
                     }
-                    .background(AppColors.backgroundGray)
+                    .background(AppColors.backgroundColor)
                 }
 
                 if viewModel.messages.count == 1 && !viewModel.isLoading {
@@ -46,7 +46,7 @@ struct AIAssistantView: View {
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    .background(AppColors.backgroundGray)
+                    .background(AppColors.backgroundColor)
                 }
 
                 Divider()
@@ -82,9 +82,9 @@ struct AIAssistantView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .background(AppColors.backgroundGray)
+                .background(AppColors.backgroundColor)
             }
-            .background(AppColors.backgroundGray)
+            .background(AppColors.backgroundColor)
             .navigationTitle("Финансовый ассистент")
             .navigationBarTitleDisplayMode(.inline)
             .onChange(of: navigationState.pendingAIMessage) { message in
@@ -204,7 +204,7 @@ struct ExampleQuestionsView: View {
 //                            .foregroundColor(AppColors.lightGreenFrameColor.opacity(0.8))
 //                            .font(.system(size: 14))
 
-                        Text(question)
+                        Text(LocalizedStringKey(question))
                             .font(.system(size: 14))
                             .foregroundColor(AppColors.blackTextColor)
                             .multilineTextAlignment(.leading)

@@ -25,7 +25,7 @@ struct AnalyticsSummaryCards: View {
 
     private func card(title: String, amount: Double, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.system(size: 12, weight: .regular))
                 .foregroundColor(AppColors.grayTextColor)
                 .lineLimit(1)

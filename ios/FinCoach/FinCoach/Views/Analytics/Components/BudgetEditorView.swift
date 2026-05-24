@@ -35,7 +35,7 @@ struct BudgetEditorView: View {
                     Picker("Категория", selection: $selectedCategory) {
                         Text("Выберите категорию").tag(Optional<Category>.none)
                         ForEach(categories) { cat in
-                            Label(cat.title, systemImage: cat.icon)
+                            Label(LocalizedStringKey(cat.title), systemImage: cat.icon)
                                 .tag(Optional<Category>.some(cat))
                         }
                     }
@@ -46,7 +46,7 @@ struct BudgetEditorView: View {
                         .keyboardType(.decimalPad)
                 }
             }
-            .navigationTitle(budget == nil ? "Новый бюджет" : "Редактировать бюджет")
+            .navigationTitle(LocalizedStringKey(budget == nil ? "Новый бюджет" : "Редактировать бюджет"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

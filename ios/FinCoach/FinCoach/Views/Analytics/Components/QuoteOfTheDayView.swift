@@ -46,7 +46,7 @@ struct QuoteOfTheDayView: View {
                         .foregroundColor(AppColors.grayTextColor)
                 }
                 
-                Text(quote)
+                Text(LocalizedStringKey(quote))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(AppColors.blackTextColor)
                     .fixedSize(horizontal: false, vertical: true)

@@ -144,7 +144,7 @@ struct DonutChartView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(excluded ? AppColors.grayTextColor : AppColors.darkGrayFrameColor)
                 )
-            Text(item.category)
+            Text(LocalizedStringKey(item.category))
                 .font(.system(size: 15, weight: .regular))
                 .foregroundColor(AppColors.blackTextColor)
                 .lineLimit(1)

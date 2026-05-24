@@ -207,7 +207,7 @@ final class GoalsViewModel: ObservableObject {
 
             if goal.progress > 0.85 {
                 candidates.append(GoalInsight(
-                    message: "«\(goal.title)» — финишная прямая! Осталось накопить \(currency(remaining))",
+                    message: Bundle.L("insight.finish", goal.title, currency(remaining)),
                     icon: "star.fill",
                     accentColor: .orange
                 ))
@@ -220,14 +220,14 @@ final class GoalsViewModel: ObservableObject {
                     if expectedProgress > goal.progress + 0.12 {
                         let daysLeft = Int(Double(deadline - nowMs) / (1000 * 60 * 60 * 24))
                         candidates.append(GoalInsight(
-                            message: "«\(goal.title)» — вы немного отстаёте от плана. Осталось \(currency(remaining)) за \(daysLeft) дн.",
+                            message: Bundle.L("insight.behind", goal.title, currency(remaining), daysLeft),
                             icon: "exclamationmark.triangle.fill",
                             accentColor: .orange
                         ))
                     } else if goal.progress > expectedProgress + 0.12 {
                         let pct = Int((goal.progress - expectedProgress) * 100)
                         candidates.append(GoalInsight(
-                            message: "«\(goal.title)» — отличный прогресс! Вы опережаете план на \(pct)%",
+                            message: Bundle.L("insight.ahead", goal.title, pct),
                             icon: "checkmark.seal.fill",
                             accentColor: AppColors.lightGreenFrameColor
                         ))
@@ -244,7 +244,7 @@ final class GoalsViewModel: ObservableObject {
                     let monthsSaved = monthsNow - monthsWith
                     if monthsWith <= monthsNow * 0.85 && monthsSaved >= 1 {
                         candidates.append(GoalInsight(
-                            message: "Если откладывать на \(currency(bonus)) больше в месяц, достигнете «\(goal.title)» на \(Int(monthsSaved)) мес. раньше",
+                            message: Bundle.L("insight.bonus", currency(bonus), goal.title, Int(monthsSaved)),
                             icon: "lightbulb.fill",
                             accentColor: AppColors.lightGreenFrameColor
                         ))
@@ -259,8 +259,8 @@ final class GoalsViewModel: ObservableObject {
             let remaining = goal.targetAmount - goal.savedAmount
             candidates.append(GoalInsight(
                 message: pct > 0
-                    ? "Вы уже накопили \(pct)% к цели «\(goal.title)». Осталось \(currency(remaining)) — продолжайте!"
-                    : "Цель «\(goal.title)» ждёт первого пополнения. Начните копить сегодня!",
+                    ? Bundle.L("insight.progress", pct, goal.title, currency(remaining))
+                    : Bundle.L("insight.start", goal.title),
                 icon: pct > 0 ? "chart.line.uptrend.xyaxis" : "flag.fill",
                 accentColor: AppColors.lightGreenFrameColor
             ))
