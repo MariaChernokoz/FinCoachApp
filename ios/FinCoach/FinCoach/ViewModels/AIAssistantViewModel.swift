@@ -2,11 +2,11 @@
 //  AIAssistantViewModel.swift
 //  FinCoach
 //
-//  Created by Chernokoz on 13.02.2026.
-//
 
 import Foundation
 import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
 import FirebaseFunctions
 import FirebaseFirestore
 import FirebaseAuth
@@ -54,7 +54,7 @@ final class AIAssistantViewModel: ObservableObject {
         let data: [String: Any] = ["question": text, "transactions": transactions]
 
         isLoading = true
-        callAnalyzeFinances(with: data)
+        callAnalyzeFinances(with: ["message": trimmed])
     }
 
     func loadExampleQuestion(_ question: String) {

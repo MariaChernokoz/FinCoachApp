@@ -8,19 +8,56 @@ import Combine
 
 struct AnalyticsSummaryCards: View {
     @ObservedObject var viewModel: AnalyticsViewModel
+    @Binding var period: AnalyticsPeriod
 
     var body: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                card(title: "Доходы",     amount: viewModel.periodIncome,        color: AppColors.lightGreenFrameColor)
-                card(title: "Расходы",    amount: viewModel.periodExpense,        color: AppColors.blackTextColor)
-                card(title: "Среднее в день", amount: viewModel.averageDailyExpense,  color: AppColors.grayTextColor)
-            }
+        VStack(alignment: .leading, spacing: 0) {
 
-            // if let rate = viewModel.savingsRate {
-            //     savingsBanner(rate: rate)
-            // }
+            // Period label
+            Text(periodLabel)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(AppColors.grayTextColor)
+                .padding(.horizontal, 20)
+                .padding(.top, 18)
+                .padding(.bottom, 14)
+
+            // Three metrics
+            HStack(spacing: 0) {
+                metricColumn(title: "Доходы",         amount: viewModel.periodIncome)
+                columnDivider
+                metricColumn(title: "Расходы",        amount: viewModel.periodExpense)
+                columnDivider
+                metricColumn(title: "Среднее в день", amount: viewModel.averageDailyExpense)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+
+            // Period selector inside card at the bottom
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(AnalyticsPeriod.allCases) { p in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) { period = p }
+                        } label: {
+                            Text(p.rawValue)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(period == p
+                                    ? AppColors.blackFrameColor
+                                    : AppColors.grayTextColor)
+                                .padding(.horizontal, 16)
+                                .frame(height: 30)
+                                .background(period == p ? Color.white : Color.clear)
+                                .cornerRadius(10)
+                        }
+                    }
+                }
+                .padding(.horizontal, 12)
+            }
+            .padding(.top, 2)
+            .padding(.bottom, 12)
         }
+        .background(AppColors.lightGreenFrameColor)
+        .cornerRadius(22)
     }
 
     private func card(title: String, amount: Double, color: Color) -> some View {
@@ -29,48 +66,57 @@ struct AnalyticsSummaryCards: View {
                 .font(.system(size: 12, weight: .regular))
                 .foregroundColor(AppColors.grayTextColor)
                 .lineLimit(1)
-            Text(formatted(amount))
-                .font(.system(size: 15, weight: .bold))
-                .foregroundColor(color)
-                .lineLimit(1)
-                .minimumScaleFactor(0.6)
+            HStack(alignment: .bottom, spacing: 3) {
+                Text(formattedNumber(amount))
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(AppColors.blackTextColor)
+                    .minimumScaleFactor(0.55)
+                    .lineLimit(1)
+                Text("₽")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(AppColors.blackTextColor)
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.whiteFrameColor)
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColors.lightGrayFrameColor, lineWidth: 1))
-        .cornerRadius(16)
     }
 
-    private func savingsBanner(rate: Double) -> some View {
-        let message = rate >= 0
-            ? String(format: "Вы сэкономили %.0f%% дохода", rate)
-            : String(format: "Расходы превысили доходы на %.0f%%", abs(rate))
-        return HStack(spacing: 8) {
-            Image(systemName: rate >= 0 ? "leaf.fill" : "exclamationmark.circle")
-                .font(.system(size: 13))
-                .foregroundColor(AppColors.darkGrayTextColor)
-            Text(message)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(AppColors.darkGrayTextColor)
-            Spacer()
+    private var columnDivider: some View {
+        Rectangle()
+            .fill(AppColors.grayTextColor.opacity(0.4))
+            .frame(width: 1, height: 44)
+            .padding(.horizontal, 6)
+    }
+
+    // MARK: - Helpers
+
+    private var periodLabel: String {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "ru_RU")
+        let now = Date()
+        switch period {
+        case .week:
+            let (start, end) = period.dateRange
+            fmt.dateFormat = "d MMM"
+            return "\(fmt.string(from: start)) – \(fmt.string(from: end))".uppercased()
+        case .month:
+            fmt.dateFormat = "LLLL yyyy"
+            return fmt.string(from: now).uppercased()
+        case .threeMonths:
+            let (start, _) = period.dateRange
+            fmt.dateFormat = "LLL"
+            return "\(fmt.string(from: start).uppercased()) – \(fmt.string(from: now).uppercased())"
+        case .year:
+            let (start, _) = period.dateRange
+            fmt.dateFormat = "LLL yyyy"
+            return "\(fmt.string(from: start).uppercased()) – \(fmt.string(from: now).uppercased())"
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(AppColors.lightGreenFrameColor)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.lightGreenFrameColor, lineWidth: 1)
-        )
-        .cornerRadius(12)
     }
 
-    private func formatted(_ amount: Double) -> String {
+    private func formattedNumber(_ amount: Double) -> String {
         let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "RUB"
-        f.locale = Locale(identifier: "ru_RU")
+        f.numberStyle = .decimal
+        f.groupingSeparator = " "
+        f.groupingSize = 3
         f.maximumFractionDigits = 0
         return f.string(from: NSNumber(value: amount)) ?? "\(Int(amount))"
     }

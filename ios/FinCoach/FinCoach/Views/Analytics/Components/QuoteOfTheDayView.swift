@@ -69,4 +69,5 @@ struct QuoteOfTheDayView: View {
 #Preview {
     QuoteOfTheDayView()
         .padding()
+        .background(AppColors.backgroundGray)
 }
