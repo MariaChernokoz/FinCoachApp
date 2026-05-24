@@ -13,20 +13,6 @@ struct SettingsView: View {
     @AppStorage("appColorScheme") private var colorScheme: String = "system"
     @AppStorage("appLanguage") private var language: String = "ru"
     @State private var showSignOutConfirmation = false
-    @State private var showThemePicker = false
-    @State private var showLanguagePicker = false
-
-    private var themeLabel: String {
-        switch colorScheme {
-        case "light": return "Светлая"
-        case "dark":  return "Тёмная"
-        default:      return "Системная"
-        }
-    }
-
-    private var languageLabel: String {
-        language == "en" ? "English" : "Русский"
-    }
     
     var body: some View {
         NavigationStack {
@@ -58,51 +44,29 @@ struct SettingsView: View {
                 }
                 
                 Section {
-                    Button {
-                        showThemePicker = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "moon.fill")
-                                .foregroundColor(AppColors.lightGreenFrameColor)
-                                .frame(width: 28)
-                            Text("Тема")
-                                .foregroundColor(AppColors.blackTextColor)
-                            Spacer()
-                            Text(themeLabel)
-                                .foregroundColor(AppColors.grayTextColor)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(AppColors.lightGrayFrameColor)
+                    HStack {
+                        Image(systemName: "moon.fill")
+                            .foregroundColor(AppColors.lightGreenFrameColor)
+                            .frame(width: 28)
+                        Picker("Тема", selection: $colorScheme) {
+                            Text("Системная").tag("system")
+                            Text("Светлая").tag("light")
+                            Text("Тёмная").tag("dark")
                         }
-                    }
-                    .confirmationDialog("Выберите тему", isPresented: $showThemePicker, titleVisibility: .visible) {
-                        Button("Системная") { colorScheme = "system" }
-                        Button("Светлая")   { colorScheme = "light" }
-                        Button("Тёмная")    { colorScheme = "dark" }
-                        Button("Отмена", role: .cancel) { }
+                        .pickerStyle(.menu)
+                        .tint(AppColors.grayTextColor)
                     }
 
-                    Button {
-                        showLanguagePicker = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "globe")
-                                .foregroundColor(AppColors.lightGreenFrameColor)
-                                .frame(width: 28)
-                            Text("Язык")
-                                .foregroundColor(AppColors.blackTextColor)
-                            Spacer()
-                            Text(languageLabel)
-                                .foregroundColor(AppColors.grayTextColor)
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(AppColors.lightGrayFrameColor)
+                    HStack {
+                        Image(systemName: "globe")
+                            .foregroundColor(AppColors.lightGreenFrameColor)
+                            .frame(width: 28)
+                        Picker("Язык", selection: $language) {
+                            Text("Русский").tag("ru")
+                            Text("English").tag("en")
                         }
-                    }
-                    .confirmationDialog("Выберите язык", isPresented: $showLanguagePicker, titleVisibility: .visible) {
-                        Button("Русский") { language = "ru" }
-                        Button("English") { language = "en" }
-                        Button("Отмена", role: .cancel) { }
+                        .pickerStyle(.menu)
+                        .tint(AppColors.grayTextColor)
                     }
                 } header: {
                     Text("Приложение")

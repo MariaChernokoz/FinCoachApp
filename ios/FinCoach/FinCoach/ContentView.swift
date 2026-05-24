@@ -13,10 +13,17 @@ struct ContentView: View {
     @StateObject private var navigationState = AppNavigationState()
     @AppStorage("appColorScheme") private var colorScheme: String = "system"
     @AppStorage("appLanguage") private var language: String = "ru"
+    @State private var showSplash = true
 
     var body: some View {
         Group {
-            if authViewModel.isAuthenticated {
+            if showSplash {
+                SplashView {
+                    withAnimation(.easeOut(duration: 0.4)) {
+                        showSplash = false
+                    }
+                }
+            } else if authViewModel.isAuthenticated {
                 TabBarView()
                     .environmentObject(authViewModel)
                     .environmentObject(navigationState)
