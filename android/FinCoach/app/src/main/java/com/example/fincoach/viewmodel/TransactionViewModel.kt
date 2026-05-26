@@ -139,6 +139,7 @@ class TransactionViewModel : ViewModel() {
         title: String,
         amount: Double,
         categoryId: String,
+        categoryTitle: String,
         isIncome: Boolean,
         timestamp: Long = System.currentTimeMillis()
     ) {
@@ -149,7 +150,6 @@ class TransactionViewModel : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             runCatching {
-                val categoryTitle = categories.value.find { it.id == categoryId }?.title ?: ""
                 transactionRepo.addTransaction(
                     Transaction(
                         title         = title.trim(),

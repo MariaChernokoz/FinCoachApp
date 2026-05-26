@@ -49,7 +49,6 @@ class TransactionRepository {
             "amount"        to transaction.amount,
             "categoryId"    to transaction.categoryId,
             "categoryTitle" to transaction.categoryTitle,
-            "category"      to transaction.categoryTitle,  // дубль для ИИ-ассистента — он читает поле "category"
             "isIncome"      to transaction.isIncome,
             "timestamp"     to transaction.timestamp
         )

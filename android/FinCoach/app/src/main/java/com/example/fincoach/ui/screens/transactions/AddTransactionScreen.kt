@@ -150,7 +150,7 @@ fun AddTransactionScreen(
             ) {
                 Button(
                     onClick = {
-                        vm.addTransaction(title, amountText.toDoubleOrNull() ?: 0.0, selectedCategory?.id ?: "", isIncome, selectedDate)
+                        vm.addTransaction(title, amountText.toDoubleOrNull() ?: 0.0, selectedCategory?.id ?: "", selectedCategory?.title ?: "", isIncome, selectedDate)
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     enabled = !isLoading,
