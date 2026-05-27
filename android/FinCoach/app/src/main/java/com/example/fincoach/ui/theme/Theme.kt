@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -46,9 +47,13 @@ fun FinCoachTheme(
         WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography  = Typography,
-        content     = content
-    )
+    CompositionLocalProvider(
+        LocalAppColors provides if (darkTheme) darkAppColors() else lightAppColors()
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography  = Typography,
+            content     = content
+        )
+    }
 }

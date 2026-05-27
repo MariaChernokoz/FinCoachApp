@@ -22,5 +22,10 @@ val TextGray        = Color(0xFF7C7C7C)
 val TextPlaceholder = Color(0xFFCED0D1)
 
 // ── Тёмная тема ───────────────────────────────────────────────────────────────
-val DarkSurface  = Color(0xFF2C2C2E)   // карточки в тёмной теме
-val DarkTextGray = Color(0xFF8E8E93)   // вторичный текст в тёмной теме
+val DarkBackground   = Color(0xFF1C1C1E)   // основной фон в тёмной теме
+val DarkSurface      = Color(0xFF2C2C2E)   // карточки / поверхности
+val DarkInputBg      = Color(0xFF3A3A3C)   // фон полей ввода
+val DarkDivider      = Color(0xFF3A3A3C)   // разделители
+val DarkTextPrimary  = Color(0xFFFFFFFF)   // основной текст
+val DarkTextGray     = Color(0xFF8E8E93)   // вторичный текст
+val DarkTextPlaceholder = Color(0xFF636366) // плейсхолдеры

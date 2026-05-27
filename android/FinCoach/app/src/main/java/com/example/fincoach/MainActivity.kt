@@ -20,10 +20,11 @@ import com.example.fincoach.ui.screens.assistant.AssistantScreen
 import com.example.fincoach.ui.screens.goals.GoalsScreen
 import com.example.fincoach.ui.screens.settings.SettingsScreen
 import com.example.fincoach.ui.screens.transactions.AddTransactionScreen
+import com.example.fincoach.ui.screens.transactions.EditTransactionScreen
 import com.example.fincoach.ui.screens.transactions.TransactionHistoryScreen
 import com.example.fincoach.ui.screens.transactions.TransactionsScreen
-import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.FinCoachTheme
+import com.example.fincoach.ui.theme.LocalAppColors
 import com.example.fincoach.viewmodel.SettingsViewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -52,8 +53,9 @@ fun FinCoachApp() {
 
     val bottomBarRoutes = setOf("transactions", "goals", "analytics", "assistant", "settings")
 
+    val c = LocalAppColors.current
     Scaffold(
-        containerColor = BgLightGray,
+        containerColor = c.bg,
         bottomBar = {
             if (currentRoute in bottomBarRoutes) {
                 FinCoachBottomBar(
@@ -121,7 +123,18 @@ fun FinCoachApp() {
                 )
             }
             composable("history") {
-                TransactionHistoryScreen(onBack = { navController.popBackStack() })
+                TransactionHistoryScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToEdit = { txId -> navController.navigate("edit_transaction/$txId") }
+                )
+            }
+            composable("edit_transaction/{transactionId}") { backStackEntry ->
+                val txId = backStackEntry.arguments?.getString("transactionId") ?: return@composable
+                EditTransactionScreen(
+                    transactionId = txId,
+                    onBack    = { navController.popBackStack() },
+                    onSuccess = { navController.popBackStack() }
+                )
             }
         }
     }
