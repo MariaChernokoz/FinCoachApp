@@ -41,6 +41,22 @@ struct AIAssistantView: View {
                         .padding()
                     }
                     .background(AppColors.backgroundColor)
+                    .onChange(of: viewModel.messages.count) { _ in
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            if let lastMessage = viewModel.messages.last {
+                                proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                            }
+                        }
+                    }
+                    .onChange(of: viewModel.isLoading) { isLoading in
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            if isLoading {
+                                proxy.scrollTo("typing", anchor: .bottom)
+                            } else if let lastMessage = viewModel.messages.last {
+                                proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                            }
+                        }
+                    }
                 }
 
                 if viewModel.messages.count == 1 && !viewModel.isLoading {

@@ -8,19 +8,27 @@ const { randomUUID } = require("crypto");
 admin.initializeApp();
 const db = admin.firestore();
 
+//обход проверки SSL-сертификата
 const sberAgent = new https.Agent({ rejectUnauthorized: false });
 
 setGlobalOptions({ region: "us-central1", maxInstances: 10 });
 
 const AUTH_KEY = process.env.GIGACHAT_AUTH_KEY;
-const RATE_LIMIT_MS = 3000;
+const RATE_LIMIT_MS = 3000; //защита от спама
 const MAX_MESSAGE_LENGTH = 500;
 const GIGACHAT_FALLBACK = "Упс, я временно вне зоны доступа. Попробуй чуть позже — я никуда не ухожу!";
 
 // Категории которые нельзя советовать сокращать
 const FIXED_CATEGORY_KEYWORDS = [
-    "жильё", "жилье", "аренда", "ипотека", "кредит",
-    "коммуналка", "жкх", "интернет", "связь", "страховка", "налог"
+    "жильё",           // → "Жильё"
+    "жилье",           // → вариант без ударения, на всякий случай
+    "аренда",          // → "Аренда", и входит в "Жильё и аренда"
+    "коммунальн",      // → "Коммунальные" (обрезаем — includes() найдёт подстроку)
+    "связь",
+    "страховка",
+    "налог",
+    "ипотека",
+    "кредит",
 ];
 
 function isFixed(title) {
@@ -29,10 +37,10 @@ function isFixed(title) {
 }
 
 function fmt(n) {
-    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " "); // Форматирование чисел
 }
 
-// ─── Token Cache ───────────────────────────────────────────────────────────────
+// ─── Token Cache ───────────── in-memory кэш токена OAuth ───────────────────────
 let _tokenCache = { value: null, expiresAt: 0 };
 
 async function getGigaToken() {
@@ -55,7 +63,7 @@ async function getGigaToken() {
         httpsAgent: sberAgent
     });
 
-    const expiresIn = response.data.expires_in ?? 1800;
+    const expiresIn = response.data.expires_in ?? 1800; //30 мин
     _tokenCache = {
         value: response.data.access_token,
         expiresAt: Date.now() + expiresIn * 1000
@@ -119,9 +127,9 @@ function detectIntent(message) {
 
 // ─── Financial Profile ─────────────────────────────────────────────────────────
 async function getFinancialProfile(userId) {
-    const monthAgoMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const monthAgoMs = Date.now() - 30 * 24 * 60 * 60 * 1000; //30 дней
 
-    const [txSnap, goalsSnap, budgetsSnap] = await Promise.all([
+    const [txSnap, goalsSnap, budgetsSnap] = await Promise.all([ //параллельно
         db.collection("transactions")
             .where("userId", "==", userId)
             .where("timestamp", ">=", monthAgoMs)
@@ -146,8 +154,8 @@ async function getFinancialProfile(userId) {
 
     txSnap.forEach(doc => {
         const { amount = 0, isIncome, categoryId, category, categoryTitle, title } = doc.data();
-        const catKey = categoryId ?? "other";
-        const catTitle = categoryTitle ?? category ?? catKey;
+        const catKey = categoryId || category || "other";
+        const catTitle = categoryTitle || category || catKey;
 
         if (isIncome) {
             incomeTotal += amount;
@@ -159,9 +167,9 @@ async function getFinancialProfile(userId) {
         }
     });
 
-    // Top 3 single transactions
+    // Top 10 single transactions
     allExpenses.sort((a, b) => b.amount - a.amount);
-    const topTransactions = allExpenses.slice(0, 3);
+    const topTransactions = allExpenses.slice(0, 10);
 
     // Build budgets map
     const budgetMap = {};
@@ -272,16 +280,18 @@ function formatProfile(p) {
 }
 
 // ─── Prompt Builder ────────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `Ты финансовый коуч в приложении FinCoach. Твои правила:
+const SYSTEM_PROMPT = `Ты профессиональный финансовый коуч. Твои правила:
 
 1. Используй ТОЛЬКО данные из профиля пользователя. Не придумывай цифры.
 2. НЕ задавай уточняющих вопросов — данные уже есть, отвечай сразу.
 3. Категории помеченные [обязательная] (жильё, аренда, ипотека, коммуналка) — НЕ советуй их сокращать, это базовые нужды.
 4. Фокусируй советы на дискреционных тратах (красота, развлечения, рестораны, одежда, хобби).
 5. Превышение бюджета — не повод ругать. Скажи: "Бывает, вот как скорректировать оставшиеся дни месяца..."
-6. Давай конкретные числа: не "сократи красоту", а "сократив красоту с 23 000 до 15 000 ₽ ты освободишь 8 000 ₽/мес — это 96 000 ₽ в год на накопления".
+6. Давай конкретные числа: не "сократи красоту", а "сократив [категория] с [сумма] до [исходная сумма - 15-20%] ты освободишь [сумма]/мес — это [сэкономленная сумма] в год на накопления".
 7. Если есть цель и свободные средства — посчитай реалистичность: "при текущей норме сбережения X ₽/мес цель достижима за Y месяцев".
-8. Отвечай тепло, кратко (4-6 предложений), на русском. Без воды и общих фраз.`;
+8. Отвечай тепло, дружелюбно, кратко (5-7 предложений), на русском. Без воды и общих фраз.
+
+Структурируй ответ. Добавь в ответ несколько подходящих эмодзи`;
 
 const INTENT_FOCUS = {
     budget:            "Сфокусируйся на бюджетах. Отметь превышения (без осуждения) и предложи как скорректировать оставшиеся дни.",
@@ -327,8 +337,9 @@ async function callGigaChat(messages) {
         data: {
             model: "GigaChat",
             messages,
-            temperature: 0.6,
-            max_tokens: 600
+            temperature: 0.75,
+            max_tokens: 1000,
+            top_p: 0.9
         },
         httpsAgent: sberAgent,
         timeout: 15000
@@ -339,11 +350,13 @@ async function callGigaChat(messages) {
 // ─── Main Cloud Function ───────────────────────────────────────────────────────
 exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
 
+    // Проверка авторизации
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Необходима авторизация.");
     }
     const userId = request.auth.uid;
 
+    // Валидация сообщения
     const userMessage = (request.data.message ?? "").trim();
     if (!userMessage) throw new HttpsError("invalid-argument", "Сообщение не может быть пустым.");
     if (userMessage.length > MAX_MESSAGE_LENGTH) {
@@ -357,14 +370,18 @@ exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
     if (Date.now() - lastRequestMs < RATE_LIMIT_MS) {
         throw new HttpsError("resource-exhausted", "Слишком много запросов. Подождите несколько секунд.");
     }
+    
+    //Обновление времени последнего запроса
     userRef.set(
         { lastAiRequest: admin.firestore.FieldValue.serverTimestamp() },
         { merge: true }
     ).catch(err => console.error("Rate limit write:", err));
 
+    // Определение намерения
     const intent = detectIntent(userMessage);
     console.log(`[1/3] intent="${intent}" uid=${userId}`);
 
+    // Загрузка финансового профиля
     let profile;
     try {
         profile = await getFinancialProfile(userId);
@@ -375,10 +392,12 @@ exports.analyzeFinances = onCall({ maxInstances: 10 }, async (request) => {
         profile = { isEmpty: true };
     }
 
+    // Построение промта
     const messages = profile.isEmpty
         ? buildNewUserPrompt(userMessage)
         : buildPrompt(formatProfile(profile), intent, userMessage);
 
+    // Вызов GigaChat
     try {
         const answer = await callGigaChat(messages);
         console.log(`[3/3] ok len=${answer.length}`);
