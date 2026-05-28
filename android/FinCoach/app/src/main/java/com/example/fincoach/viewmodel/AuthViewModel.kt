@@ -26,6 +26,12 @@ class AuthViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
 
+    // true = только что зарегистрировались, письмо отправлено — показать диалог
+    private val _showVerificationDialog = MutableStateFlow(false)
+    val showVerificationDialog = _showVerificationDialog.asStateFlow()
+
+    fun dismissVerificationDialog() { _showVerificationDialog.value = false }
+
     fun clearError() { _errorMessage.value = null }
 
     // Регистрация
@@ -53,7 +59,10 @@ class AuthViewModel : ViewModel() {
                 // 3. Создаём документ в коллекции users в Firestore
                 userRepository.createUserProfile(name = name, email = email)
 
-                _isAuthSuccess.value = true
+                // 4. Отправляем письмо с подтверждением email
+                runCatching { result.user?.sendEmailVerification()?.await() }
+                _showVerificationDialog.value = true
+                // Не переходим сразу — ждём пока пользователь закроет диалог
             } catch (e: Exception) {
                 _errorMessage.value = "Ошибка регистрации: ${e.localizedMessage}"
             } finally {

@@ -75,12 +75,13 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
     val scope = rememberCoroutineScope()
     val authViewModel: AuthViewModel = viewModel()
     val isAuthSuccess by authViewModel.isAuthSuccess.collectAsState()
+    val showVerificationDialog by authViewModel.showVerificationDialog.collectAsState()
 
-// Этот блок сработает автоматически, когда флаг в ViewModel станет true
+// Переход на главный экран — только после логина или после закрытия диалога верификации
     LaunchedEffect(isAuthSuccess) {
         if (isAuthSuccess) {
             onSuccess()
-            authViewModel.resetAuthStatus() // Сбрасываем флаг для следующего раза
+            authViewModel.resetAuthStatus()
         }
     }
 
@@ -264,6 +265,41 @@ fun RegistrationScreen(onSuccess: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(50.dp))
         }
+    }
+
+    // Диалог подтверждения email после регистрации
+    if (showVerificationDialog) {
+        AlertDialog(
+            onDismissRequest = {},
+            shape = RoundedCornerShape(24.dp),
+            containerColor = White,
+            title = { Text("Подтвердите почту", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+            text = {
+                Column {
+                    Text("📧", fontSize = 40.sp, modifier = androidx.compose.ui.Modifier.align(Alignment.CenterHorizontally))
+                    Spacer(modifier = androidx.compose.ui.Modifier.height(12.dp))
+                    Text(
+                        "Мы отправили письмо с подтверждением на\n$email\n\nПерейдите по ссылке в письме, затем войдите в аккаунт.",
+                        color = TextGray,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        authViewModel.dismissVerificationDialog()
+                        // Возвращаем на экран входа (tab 0)
+                        authViewModel.resetAuthStatus()
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = DeepGreen)
+                ) {
+                    Text("Понятно", color = White, fontWeight = FontWeight.Bold)
+                }
+            }
+        )
     }
 
     // Окно восстановления пароля
