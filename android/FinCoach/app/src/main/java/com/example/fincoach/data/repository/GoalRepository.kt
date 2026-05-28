@@ -65,6 +65,17 @@ class GoalRepository {
         ).await()
     }
 
+    suspend fun withdrawSaving(goalId: String, amount: Double, currentSaved: Double, target: Double) {
+        val newSaved = maxOf(0.0, currentSaved - amount)
+        val isCompleted = newSaved >= target
+        col().document(goalId).update(
+            mapOf(
+                "savedAmount"  to newSaved,
+                "isCompleted"  to isCompleted
+            )
+        ).await()
+    }
+
     suspend fun deleteGoal(goalId: String) {
         col().document(goalId).delete().await()
     }

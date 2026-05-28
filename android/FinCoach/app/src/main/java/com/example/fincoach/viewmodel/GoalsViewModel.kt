@@ -75,6 +75,16 @@ class GoalsViewModel : ViewModel() {
         }
     }
 
+    fun withdrawSaving(goal: Goal, amount: Double) {
+        if (amount <= 0) { _error.value = "Сумма должна быть больше 0"; return }
+        if (amount > goal.savedAmount) { _error.value = "Нельзя снять больше, чем накоплено (${String.format("%,.0f", goal.savedAmount)} ₽)"; return }
+        viewModelScope.launch {
+            runCatching {
+                repository.withdrawSaving(goal.id, amount, goal.savedAmount, goal.targetAmount)
+            }.onFailure { _error.value = "Ошибка: ${it.localizedMessage}" }
+        }
+    }
+
     fun deleteGoal(goalId: String) {
         viewModelScope.launch {
             runCatching { repository.deleteGoal(goalId) }
