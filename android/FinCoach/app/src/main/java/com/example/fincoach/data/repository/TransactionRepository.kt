@@ -59,6 +59,18 @@ class TransactionRepository {
         return doc.id
     }
 
+    suspend fun updateTransaction(transaction: Transaction) {
+        val data = mapOf(
+            "title"         to transaction.title,
+            "amount"        to transaction.amount,
+            "categoryId"    to transaction.categoryId,
+            "categoryTitle" to transaction.categoryTitle,
+            "isIncome"      to transaction.isIncome,
+            "timestamp"     to transaction.timestamp
+        )
+        col().document(transaction.id).update(data)
+    }
+
     suspend fun deleteTransaction(id: String) {
         col().document(id).delete()
     }

@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+enum class SortOrder { NEWEST, OLDEST, EXPENSIVE, CHEAPEST }
+
 class TransactionViewModel : ViewModel() {
 
     private val transactionRepo = TransactionRepository()
@@ -64,33 +66,42 @@ class TransactionViewModel : ViewModel() {
     private val _typeFilter = MutableStateFlow(0)
     val typeFilter = _typeFilter.asStateFlow()
 
+    private val _sortOrder = MutableStateFlow(SortOrder.NEWEST)
+    val sortOrder = _sortOrder.asStateFlow()
+
+    // Фильтр по категориям (пустое множество = все категории)
+    private val _categoryFilter = MutableStateFlow<Set<String>>(emptySet())
+    val categoryFilter = _categoryFilter.asStateFlow()
+
     val filteredTransactions: StateFlow<List<Transaction>> = combine(
         allTransactions, _startDate, _endDate, _searchQuery, _typeFilter
     ) { transactions, start, end, query, type ->
         transactions.filter { tx ->
-            // 1. Фильтр по дате и типу (оставляем как было)
+            // 1. Фильтр по дате и типу
             val dateMatch = if (start == null || end == null) true else tx.timestamp in start..(end + 86399999L)
             val typeMatch = when (type) { 1 -> tx.isIncome; 2 -> !tx.isIncome; else -> true }
 
-            // 2. Улучшенный поиск (Fuzzy Search)
+            // 2. Fuzzy Search (Левенштейн)
             val searchMatch = if (query.isBlank()) true else {
                 val wordsInTx = (tx.title + " " + tx.categoryTitle).split(" ")
-
-                // Проверяем каждое слово транзакции на сходство с запросом
                 wordsInTx.any { word ->
-                    // Обычное вхождение (для скорости)
                     if (word.contains(query, ignoreCase = true)) return@any true
-
-                    // Если не нашли точно, считаем расстояние Левенштейна
                     val distance = levenshteinDistance(query.lowercase(), word.lowercase())
-
-                    // Порог: разрешаем 1 ошибку на каждые 4 символа
                     val threshold = if (query.length > 4) 2 else 1
                     distance <= threshold
                 }
             }
 
             dateMatch && typeMatch && searchMatch
+        }
+    }.combine(_categoryFilter) { list, catFilter ->
+        if (catFilter.isEmpty()) list else list.filter { it.categoryId in catFilter }
+    }.combine(_sortOrder) { list, order ->
+        when (order) {
+            SortOrder.NEWEST    -> list.sortedByDescending { it.timestamp }
+            SortOrder.OLDEST    -> list.sortedBy { it.timestamp }
+            SortOrder.EXPENSIVE -> list.sortedByDescending { it.amount }
+            SortOrder.CHEAPEST  -> list.sortedBy { it.amount }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -178,6 +189,56 @@ class TransactionViewModel : ViewModel() {
         }
     }
 
+    fun updateTransaction(
+        original: Transaction,
+        title: String,
+        amount: Double,
+        categoryId: String,
+        categoryTitle: String,
+        isIncome: Boolean,
+        timestamp: Long
+    ) {
+        if (title.isBlank() || amount <= 0 || categoryId.isBlank()) {
+            _error.value = "Пожалуйста, заполните все поля"
+            return
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+            runCatching {
+                val updated = original.copy(
+                    title         = title.trim(),
+                    amount        = amount,
+                    categoryId    = categoryId,
+                    categoryTitle = categoryTitle,
+                    isIncome      = isIncome,
+                    timestamp     = timestamp
+                )
+                transactionRepo.updateTransaction(updated)
+
+                // Пересчёт баланса: откатить старую сумму, добавить новую
+                val oldDelta = if (original.isIncome) original.amount else -original.amount
+                val newDelta = if (isIncome) amount else -amount
+                userRepo.updateBalance(totalBalance.value - oldDelta + newDelta)
+
+                // Откат бюджета по старой категории (если расход)
+                if (!original.isIncome) {
+                    budgets.value.find { it.categoryId == original.categoryId }?.let { b ->
+                        budgetRepo.updateSpent(b.id, (b.currentSpent - original.amount).coerceAtLeast(0.0))
+                    }
+                }
+                // Начисление в бюджет новой категории (если расход)
+                if (!isIncome) {
+                    budgets.value.find { it.categoryId == categoryId }?.let { b ->
+                        budgetRepo.updateSpent(b.id, b.currentSpent + amount)
+                    }
+                }
+
+                _successMessage.value = "Операция обновлена"
+            }.onFailure { _error.value = "Ошибка при обновлении: ${it.localizedMessage}" }
+            _isLoading.value = false
+        }
+    }
+
     fun deleteTransaction(transaction: Transaction) {
         viewModelScope.launch {
             runCatching {
@@ -216,6 +277,19 @@ class TransactionViewModel : ViewModel() {
         _typeFilter.value = type
     }
 
+    fun setSortOrder(order: SortOrder) {
+        _sortOrder.value = order
+    }
+
+    fun toggleCategoryFilter(categoryId: String) {
+        val current = _categoryFilter.value
+        _categoryFilter.value = if (categoryId in current) current - categoryId else current + categoryId
+    }
+
+    fun clearCategoryFilter() {
+        _categoryFilter.value = emptySet()
+    }
+
     fun getCategoryTitle(categoryId: String): String =
         categories.value.find { it.id == categoryId }?.title ?: "Без категории"
 
@@ -226,4 +300,6 @@ class TransactionViewModel : ViewModel() {
         _endDate.value = null
         _searchQuery.value = ""
         _typeFilter.value = 0
+        _sortOrder.value = SortOrder.NEWEST
+        _categoryFilter.value = emptySet()
     }}
