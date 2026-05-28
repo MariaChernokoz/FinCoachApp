@@ -2,7 +2,6 @@ package com.example.fincoach.ui.screens.analytics
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,23 +18,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,26 +32,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fincoach.data.model.Budget
-import com.example.fincoach.data.model.Category
 import com.example.fincoach.ui.FinCoachTopBar
-import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.DeepGreen
-import com.example.fincoach.ui.theme.TextBlack
-import com.example.fincoach.ui.theme.TextDarkGray
+import com.example.fincoach.ui.theme.LocalAppColors
 import com.example.fincoach.ui.theme.TextGray
-import com.example.fincoach.ui.theme.TextPlaceholder
-import com.example.fincoach.ui.theme.White
 import com.example.fincoach.viewmodel.AnalyticsViewModel
 import java.util.Calendar
 
@@ -74,139 +56,225 @@ private val chartColors = listOf(
     Color(0xFFF0A500), Color(0xFF58D68D)
 )
 
+private val monthNames = listOf("Янв", "Февр", "Март", "Апр", "Май", "Июн", "Июл", "Авг", "Сент", "Окт", "Нояб", "Дек")
+
+private fun niceMax(value: Double): Double {
+    if (value <= 0) return 1000.0
+    val magnitude = Math.pow(10.0, Math.floor(Math.log10(value)))
+    val normalized = value / magnitude
+    return when {
+        normalized <= 1 -> magnitude
+        normalized <= 2 -> 2 * magnitude
+        normalized <= 5 -> 5 * magnitude
+        else -> 10 * magnitude
+    }
+}
+
+private fun formatYLabel(value: Double): String = when {
+    value >= 1_000_000 -> "${(value / 1_000_000).toInt()}М"
+    value >= 1_000     -> "${(value / 1_000).toInt()}К"
+    else               -> "${value.toInt()}"
+}
+
 @Composable
 fun AnalyticsScreen() {
     val vm: AnalyticsViewModel = viewModel()
 
     val transactions by vm.transactions.collectAsState()
-    val categories   by vm.categories.collectAsState()
-    val budgets      by vm.budgets.collectAsState()
     val totalIncome  by vm.totalIncome.collectAsState()
     val totalExpense by vm.totalExpense.collectAsState()
 
-    var showAddBudget    by remember { mutableStateOf(false) }
-    var budgetCategory   by remember { mutableStateOf<Category?>(null) }
-    var budgetLimit      by remember { mutableStateOf("") }
-    var budgetPeriod     by remember { mutableStateOf("month") }
-    var dropdownExpanded by remember { mutableStateOf(false) }
+    val c = LocalAppColors.current
 
-    val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
-    val currentYear  = Calendar.getInstance().get(Calendar.YEAR)
+    var selectedPeriod by remember { mutableStateOf("month") }
+    var showExpenses   by remember { mutableStateOf(true) }
 
-    val thisMonthExpenses = remember(transactions) {
-        transactions.filter { tx ->
-            val cal = Calendar.getInstance().apply { timeInMillis = tx.timestamp }
-            !tx.isIncome && cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
+    // ── Границы текущего периода ─────────────────────────────────────────────
+    val periodStart = remember(selectedPeriod) {
+        val cal = Calendar.getInstance()
+        when (selectedPeriod) {
+            "week"    -> cal.apply { add(Calendar.DAY_OF_YEAR, -7) }.timeInMillis
+            "month"   -> cal.apply {
+                set(Calendar.DAY_OF_MONTH, 1)
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0);      set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            "quarter" -> cal.apply { add(Calendar.MONTH, -3) }.timeInMillis
+            "year"    -> cal.apply {
+                set(Calendar.DAY_OF_YEAR, 1)
+                set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0);      set(Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            else -> 0L
         }
     }
-    val lastMonthExpenses = remember(transactions) {
-        val lastMonth = if (currentMonth == 0) 11 else currentMonth - 1
-        val lastYear  = if (currentMonth == 0) currentYear - 1 else currentYear
-        transactions.filter { tx ->
-            val cal = Calendar.getInstance().apply { timeInMillis = tx.timestamp }
-            !tx.isIncome && cal.get(Calendar.MONTH) == lastMonth && cal.get(Calendar.YEAR) == lastYear
-        }
+
+
+    // ── Фильтрация транзакций ────────────────────────────────────────────────
+    val curExpenses = remember(transactions, periodStart) {
+        transactions.filter { !it.isIncome && it.timestamp >= periodStart }
     }
-    val expenseByCategory = remember(thisMonthExpenses) {
-        thisMonthExpenses
-            .groupBy { it.categoryTitle.ifBlank { "Другое" } }
+    val curIncome = remember(transactions, periodStart) {
+        transactions.filter { it.isIncome && it.timestamp >= periodStart }
+    }
+
+    val expenseByCategory = remember(curExpenses) {
+        curExpenses.groupBy { it.categoryTitle.ifBlank { "Другое" } }
             .mapValues { (_, txs) -> txs.sumOf { it.amount } }
             .entries.sortedByDescending { it.value }
     }
-    val totalThisMonth = thisMonthExpenses.sumOf { it.amount }
-    val totalLastMonth = lastMonthExpenses.sumOf { it.amount }
-    val diffPercent    = if (totalLastMonth > 0) ((totalThisMonth - totalLastMonth) / totalLastMonth * 100).toInt() else 0
+    val incomeByCategory = remember(curIncome) {
+        curIncome.groupBy { it.categoryTitle.ifBlank { "Другое" } }
+            .mapValues { (_, txs) -> txs.sumOf { it.amount } }
+            .entries.sortedByDescending { it.value }
+    }
 
-    Column(modifier = Modifier.fillMaxSize().background(BgLightGray)) {
+    val totalCur    = curExpenses.sumOf { it.amount }
+    val totalCurInc = curIncome.sumOf { it.amount }
 
-        FinCoachTopBar(
-            title = "Аналитика и бюджеты",
-            actionIcon = Icons.Default.Add,
-            onActionClick = { showAddBudget = true }
-        )
+    // ── Данные для столбчатой диаграммы (последние 6 месяцев) ────────────────
+    val monthlyData = remember(transactions) {
+        (5 downTo 0).map { monthsAgo ->
+            val cal = Calendar.getInstance().apply { add(Calendar.MONTH, -monthsAgo) }
+            val m = cal.get(Calendar.MONTH)
+            val y = cal.get(Calendar.YEAR)
+            val income  = transactions.filter { tx ->
+                val tc = Calendar.getInstance().apply { timeInMillis = tx.timestamp }
+                tx.isIncome && tc.get(Calendar.MONTH) == m && tc.get(Calendar.YEAR) == y
+            }.sumOf { it.amount }
+            val expense = transactions.filter { tx ->
+                val tc = Calendar.getInstance().apply { timeInMillis = tx.timestamp }
+                !tx.isIncome && tc.get(Calendar.MONTH) == m && tc.get(Calendar.YEAR) == y
+            }.sumOf { it.amount }
+            Triple(monthNames[m], income, expense)
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
+
+        FinCoachTopBar(title = "Аналитика")
 
         Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // ── Сравнение с прошлым месяцем ──────────────────────────────────
-            SectionLabel("СРАВНЕНИЕ С ПРОШЛЫМ МЕСЯЦЕМ")
-            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        MonthStat("Прошлый месяц", totalLastMonth, TextGray)
-                        MonthStat("Этот месяц",    totalThisMonth, TextDarkGray)
-                    }
-                    Spacer(Modifier.height(14.dp))
-                    HorizontalDivider(color = BgLightGray)
-                    Spacer(Modifier.height(12.dp))
-                    if (totalLastMonth == 0.0 && totalThisMonth == 0.0) {
-                        Text("Нет данных для сравнения", color = TextGray, fontSize = 13.sp)
-                    } else {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            val isMore = diffPercent > 0
-                            Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(if (isMore) Color(0xFFE74C3C).copy(0.1f) else Color(0xFF27AE60).copy(0.1f)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-                                Text("${if (isMore) "▲" else "▼"} ${kotlin.math.abs(diffPercent)}%", color = if (isMore) Color(0xFFE74C3C) else Color(0xFF27AE60), fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Text(when { diffPercent > 0 -> "больше чем в прошлом месяце"; diffPercent < 0 -> "меньше чем в прошлом месяце"; else -> "столько же, как в прошлом месяце" }, color = TextGray, fontSize = 13.sp)
+            // ── Переключатель периода ─────────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(c.cardBg)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                listOf("week" to "Неделя", "month" to "Месяц", "quarter" to "Квартал", "year" to "Год")
+                    .forEach { (period, label) ->
+                        val selected = selectedPeriod == period
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (selected) DeepGreen.copy(alpha = 0.12f) else Color.Transparent)
+                                .clickable { selectedPeriod = period }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                label,
+                                fontSize = 12.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selected) DeepGreen else c.textSecondary
+                            )
                         }
+                    }
+            }
+
+            // ── Круговая диаграмма ────────────────────────────────────────────
+            SectionLabel("ПО КАТЕГОРИЯМ")
+
+            // Переключатель Расходы / Доходы
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(c.cardBg)
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                listOf(true to "Расходы", false to "Доходы").forEach { (isExpense, label) ->
+                    val selected = showExpenses == isExpense
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (selected && isExpense) Color(0xFFE74C3C).copy(alpha = 0.12f)
+                                else if (selected) DeepGreen.copy(alpha = 0.12f)
+                                else Color.Transparent
+                            )
+                            .clickable { showExpenses = isExpense }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            label,
+                            fontSize = 14.sp,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            color = when {
+                                selected && isExpense -> Color(0xFFE74C3C)
+                                selected             -> DeepGreen
+                                else                 -> c.textSecondary
+                            }
+                        )
                     }
                 }
             }
 
-            // ── Круговая диаграмма ────────────────────────────────────────────
-            SectionLabel("РАСХОДЫ ПО КАТЕГОРИЯМ")
-            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
-                if (expenseByCategory.isEmpty()) {
+            val activeByCategory = if (showExpenses) expenseByCategory else incomeByCategory
+            val activeTotal      = if (showExpenses) totalCur else totalCurInc
+            val activeAccent     = if (showExpenses) Color(0xFFE74C3C) else DeepGreen
+            val emptyText        = if (showExpenses) "Расходов за этот период нет" else "Доходов за этот период нет"
+
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = c.cardBg), elevation = CardDefaults.cardElevation(2.dp)) {
+                if (activeByCategory.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().padding(36.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("📊", fontSize = 36.sp); Spacer(Modifier.height(8.dp))
-                            Text("Расходов в этом месяце нет", color = TextGray, fontSize = 14.sp)
+                            Text(emptyText, color = c.textSecondary, fontSize = 14.sp)
                         }
                     }
                 } else {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        DonutChart(data = expenseByCategory.map { it.value.toFloat() }, colors = chartColors.take(expenseByCategory.size), total = totalThisMonth, modifier = Modifier.size(180.dp).align(Alignment.CenterHorizontally))
+                        DonutChart(
+                            data        = activeByCategory.map { it.value.toFloat() },
+                            colors      = chartColors.take(activeByCategory.size),
+                            total       = activeTotal,
+                            accentColor = activeAccent,
+                            modifier    = Modifier.size(180.dp).align(Alignment.CenterHorizontally)
+                        )
                         Spacer(Modifier.height(20.dp))
-                        expenseByCategory.forEachIndexed { index, (name, amount) ->
+                        activeByCategory.forEachIndexed { index, (name, amount) ->
                             val color   = chartColors.getOrElse(index) { TextGray }
-                            val percent = if (totalThisMonth > 0) (amount / totalThisMonth * 100).toInt() else 0
+                            val percent = if (activeTotal > 0) (amount / activeTotal * 100).toInt() else 0
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
                                 Spacer(Modifier.width(10.dp))
-                                Text(name, modifier = Modifier.weight(1f), fontSize = 13.sp, color = TextDarkGray)
-                                Text("$percent%", color = TextGray, fontSize = 12.sp)
+                                Text(name, modifier = Modifier.weight(1f), fontSize = 13.sp, color = c.textPrimary)
+                                Text("$percent%", color = c.textSecondary, fontSize = 12.sp)
                                 Spacer(Modifier.width(12.dp))
-                                Text("${String.format("%,.0f", amount)} ₽", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = TextDarkGray)
+                                Text("${String.format("%,.0f", amount)} ₽", fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = c.textPrimary)
                             }
-                            if (index < expenseByCategory.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 3.dp), color = BgLightGray)
+                            if (index < activeByCategory.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 3.dp), color = c.divider)
                         }
                     }
                 }
             }
 
-            // ── Бюджеты ───────────────────────────────────────────────────────
-            SectionLabel("БЮДЖЕТЫ")
-            if (budgets.isEmpty()) {
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("🎯", fontSize = 32.sp); Spacer(Modifier.height(8.dp))
-                            Text("Бюджеты не заданы", color = TextGray, fontSize = 14.sp)
-                            Text("Нажмите + в шапке чтобы добавить", color = TextPlaceholder, fontSize = 12.sp)
-                        }
-                    }
-                }
-            } else {
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        budgets.forEachIndexed { index, budget ->
-                            val catTitle = categories.find { it.id == budget.categoryId }?.title ?: "—"
-                            BudgetProgressRow(budget = budget, catTitle = catTitle, onDelete = { vm.deleteBudget(budget.id) })
-                            if (index < budgets.lastIndex) HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = BgLightGray)
-                        }
-                    }
+            // ── Динамика по месяцам ───────────────────────────────────────────
+            SectionLabel("ДИНАМИКА ПО МЕСЯЦАМ")
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = c.cardBg), elevation = CardDefaults.cardElevation(2.dp)) {
+                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 16.dp)) {
+                    MonthlyBarChart(monthlyData = monthlyData)
                 }
             }
 
@@ -220,119 +288,204 @@ fun AnalyticsScreen() {
             Spacer(Modifier.height(16.dp))
         }
     }
+}
 
-    // Диалог добавления бюджета
-    if (showAddBudget) {
-        val expenseCategories = categories.filter { it.type == "expense" }
-        AlertDialog(
-            onDismissRequest = { showAddBudget = false },
-            title = { Text("Новый бюджет", fontWeight = FontWeight.Bold) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.5.dp, DeepGreen, RoundedCornerShape(12.dp)).clickable { dropdownExpanded = true }.padding(horizontal = 16.dp, vertical = 14.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                                Column {
-                                    Text("Категория", fontSize = 11.sp, color = DeepGreen, fontWeight = FontWeight.Medium)
-                                    Spacer(Modifier.height(2.dp))
-                                    Text(budgetCategory?.title ?: "Выберите категорию", fontSize = 15.sp, color = if (budgetCategory != null) TextBlack else TextPlaceholder)
-                                }
-                                Text("▾", color = DeepGreen, fontSize = 16.sp)
-                            }
-                        }
-                        DropdownMenu(expanded = dropdownExpanded, onDismissRequest = { dropdownExpanded = false }, modifier = Modifier.width(220.dp).clip(RoundedCornerShape(16.dp)).background(White)) {
-                            if (expenseCategories.isEmpty()) {
-                                DropdownMenuItem(text = { Text("Нет категорий", color = TextGray, fontSize = 14.sp) }, onClick = {})
-                            } else {
-                                expenseCategories.forEach { cat ->
-                                    DropdownMenuItem(
-                                        text = { Text(cat.title, fontSize = 14.sp, color = if (budgetCategory?.id == cat.id) DeepGreen else TextDarkGray, fontWeight = if (budgetCategory?.id == cat.id) FontWeight.Bold else FontWeight.Normal) },
-                                        onClick = { budgetCategory = cat; dropdownExpanded = false },
-                                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (budgetCategory?.id == cat.id) DeepGreen.copy(0.07f) else White)
-                                    )
-                                }
-                            }
-                        }
+@Composable
+private fun MonthlyBarChart(monthlyData: List<Triple<String, Double, Double>>) {
+    val c = LocalAppColors.current
+    val incomeColor  = DeepGreen
+    val expenseColor = Color(0xFFE74C3C)
+    val gridColor    = c.divider
+
+    val hasData = monthlyData.any { it.second > 0 || it.third > 0 }
+    if (!hasData) {
+        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
+            Text("Нет данных за последние 6 месяцев", color = c.textSecondary, fontSize = 13.sp)
+        }
+        return
+    }
+
+    val maxValue = monthlyData.maxOf { maxOf(it.second, it.third) }
+    val yMax = niceMax(maxValue)
+    val yLevels = listOf(1.0, 0.75, 0.5, 0.25, 0.0)
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Область графика
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+        ) {
+            // Метки по оси Y
+            Column(
+                modifier = Modifier
+                    .width(44.dp)
+                    .fillMaxHeight()
+                    .padding(end = 6.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                yLevels.forEach { fraction ->
+                    Text(
+                        text = formatYLabel(yMax * fraction),
+                        fontSize = 9.sp,
+                        color = TextGray,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            // Столбчатый график
+            Canvas(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+            ) {
+                val h = size.height
+                val w = size.width
+                val n = monthlyData.size
+                val slotW = w / n
+                val gap = slotW * 0.12f
+                val barW = (slotW - gap * 2f) / 2f - 2f
+                val radius = CornerRadius(4.dp.toPx())
+
+                // Сетка
+                yLevels.forEach { fraction ->
+                    val y = h * (1f - fraction).toFloat()
+                    drawLine(color = gridColor, start = Offset(0f, y), end = Offset(w, y), strokeWidth = 1.dp.toPx())
+                }
+
+                // Столбцы
+                monthlyData.forEachIndexed { i, (_, income, expense) ->
+                    val slotX = i * slotW + gap
+
+                    val incH = ((income / yMax) * h).toFloat().coerceAtLeast(0f)
+                    if (incH > 2f) {
+                        drawRoundRect(
+                            color = incomeColor,
+                            topLeft = Offset(slotX, h - incH),
+                            size = Size(barW, incH),
+                            cornerRadius = radius
+                        )
                     }
-                    OutlinedTextField(value = budgetLimit, onValueChange = { budgetLimit = it.filter { c -> c.isDigit() || c == '.' } }, label = { Text("Лимит (₽)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = DeepGreen, focusedLabelColor = DeepGreen))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("month" to "Месяц", "week" to "Неделя").forEach { (value, label) ->
-                            val selected = budgetPeriod == value
-                            Box(modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(if (selected) DeepGreen.copy(0.1f) else BgLightGray).border(if (selected) 1.5.dp else 0.dp, if (selected) DeepGreen else Color.Transparent, RoundedCornerShape(10.dp)).clickable { budgetPeriod = value }.padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
-                                Text(label, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal, color = if (selected) DeepGreen else TextGray, fontSize = 14.sp)
-                            }
-                        }
+
+                    val expX = slotX + barW + 2f
+                    val expH = ((expense / yMax) * h).toFloat().coerceAtLeast(0f)
+                    if (expH > 2f) {
+                        drawRoundRect(
+                            color = expenseColor,
+                            topLeft = Offset(expX, h - expH),
+                            size = Size(barW, expH),
+                            cornerRadius = radius
+                        )
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val limit = budgetLimit.toDoubleOrNull() ?: 0.0
-                    val cat   = budgetCategory
-                    if (cat != null && limit > 0) {
-                        vm.setBudget(cat.id, limit, budgetPeriod)
-                        showAddBudget = false; budgetCategory = null; budgetLimit = ""; budgetPeriod = "month"
-                    }
-                }) { Text("Добавить", color = DeepGreen, fontWeight = FontWeight.Bold) }
-            },
-            dismissButton = { TextButton(onClick = { showAddBudget = false; budgetCategory = null; budgetLimit = "" }) { Text("Отмена", color = TextGray) } }
-        )
+            }
+        }
+
+        // Подписи месяцев
+        Row(modifier = Modifier.fillMaxWidth().padding(start = 44.dp, top = 4.dp)) {
+            monthlyData.forEach { (label, _, _) ->
+                Text(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    fontSize = 9.sp,
+                    color = TextGray,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // Легенда
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(Modifier.size(10.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)).background(DeepGreen))
+            Spacer(Modifier.width(4.dp))
+            Text("Доходы", fontSize = 11.sp, color = TextGray)
+            Spacer(Modifier.width(16.dp))
+            Box(Modifier.size(10.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)).background(Color(0xFFE74C3C)))
+            Spacer(Modifier.width(4.dp))
+            Text("Расходы", fontSize = 11.sp, color = TextGray)
+        }
     }
 }
 
 @Composable
-private fun DonutChart(data: List<Float>, colors: List<Color>, total: Double, modifier: Modifier = Modifier) {
-    val sum = data.sum().takeIf { it > 0f } ?: 1f
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        fontSize = 11.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = TextGray,
+        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp)
+    )
+}
+
+@Composable
+private fun TotalCard(modifier: Modifier, label: String, amount: Double, color: Color) {
+    val c = LocalAppColors.current
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = c.cardBg),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(label, fontSize = 12.sp, color = c.textSecondary)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "${String.format("%,.0f", amount)} ₽",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
+    }
+}
+
+@Composable
+private fun DonutChart(
+    data: List<Float>,
+    colors: List<Color>,
+    total: Double,
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val c = LocalAppColors.current
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val stroke = 44.dp.toPx(); val radius = (size.minDimension - stroke) / 2f
-            val center = Offset(size.width / 2f, size.height / 2f); var startAngle = -90f
+            val total_f = data.sum()
+            if (total_f == 0f) return@Canvas
+            val stroke = size.minDimension * 0.18f
+            val radius = (size.minDimension - stroke) / 2f
+            val center = Offset(size.width / 2f, size.height / 2f)
+            var startAngle = -90f
             data.forEachIndexed { i, value ->
-                val sweep = (value / sum) * 360f
-                drawArc(color = colors.getOrElse(i) { Color.Gray }, startAngle = startAngle, sweepAngle = sweep - 2f, useCenter = false, topLeft = Offset(center.x - radius, center.y - radius), size = Size(radius * 2f, radius * 2f), style = Stroke(width = stroke, cap = StrokeCap.Round))
+                val sweep = 360f * value / total_f
+                drawArc(
+                    color = colors.getOrElse(i) { Color.Gray },
+                    startAngle = startAngle,
+                    sweepAngle = sweep - 1.5f,
+                    useCenter = false,
+                    topLeft = Offset(center.x - radius, center.y - radius),
+                    size = Size(radius * 2, radius * 2),
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
                 startAngle += sweep
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("${String.format("%,.0f", total)}", fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, color = TextDarkGray)
-            Text("₽", fontSize = 12.sp, color = TextGray)
+            Text(
+                text = String.format("%,.0f", total),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = accentColor
+            )
+            Text("₽", fontSize = 12.sp, color = c.textSecondary)
         }
-    }
-}
-
-@Composable
-private fun BudgetProgressRow(budget: Budget, catTitle: String, onDelete: () -> Unit) {
-    var showDialog by remember { mutableStateOf(false) }
-    if (showDialog) {
-        AlertDialog(onDismissRequest = { showDialog = false }, title = { Text("Удалить бюджет?") }, text = { Text("Лимит для «$catTitle» будет удалён.") },
-            confirmButton = { TextButton(onClick = { onDelete(); showDialog = false }) { Text("Удалить", color = Color(0xFFE74C3C)) } },
-            dismissButton = { TextButton(onClick = { showDialog = false }) { Text("Отмена", color = TextGray) } })
-    }
-    Column {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(catTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextDarkGray)
-                Text("${String.format("%,.0f", budget.currentSpent)} / ${String.format("%,.0f", budget.limitAmount)} ₽", color = TextGray, fontSize = 12.sp)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (budget.isOverLimit) "Превышен!" else "осталось ${String.format("%,.0f", budget.remaining)} ₽", color = if (budget.isOverLimit) Color(0xFFE74C3C) else Color(0xFF27AE60), fontSize = 11.sp, fontWeight = FontWeight.Medium)
-                Spacer(Modifier.width(4.dp))
-                IconButton(onClick = { showDialog = true }, modifier = Modifier.size(28.dp)) { Icon(Icons.Default.Delete, null, tint = TextPlaceholder, modifier = Modifier.size(14.dp)) }
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-        Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(BgLightGray)) {
-            Box(modifier = Modifier.fillMaxWidth(budget.spentFraction.toFloat()).fillMaxHeight().clip(RoundedCornerShape(4.dp)).background(when { budget.spentFraction >= 1.0 -> Color(0xFFE74C3C); budget.spentFraction >= 0.75 -> Color(0xFFF39C12); else -> DeepGreen }))
-        }
-        Spacer(Modifier.height(4.dp))
-        Text("${(budget.spentFraction * 100).toInt()}% · ${if (budget.period == "month") "в месяц" else "в неделю"}", color = TextPlaceholder, fontSize = 11.sp)
-    }
-}
-
-@Composable private fun SectionLabel(text: String) { Text(text, color = TextGray, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(start = 4.dp)) }
-@Composable private fun MonthStat(label: String, amount: Double, color: Color) { Column { Text(label, color = TextGray, fontSize = 12.sp); Spacer(Modifier.height(4.dp)); Text("${String.format("%,.2f", amount)} ₽", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = color) } }
-@Composable private fun TotalCard(modifier: Modifier, label: String, amount: Double, color: Color) {
-    Card(modifier = modifier, shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
-        Column(modifier = Modifier.padding(16.dp)) { Text(label, color = TextGray, fontSize = 12.sp); Spacer(Modifier.height(4.dp)); Text("${String.format("%,.2f", amount)} ₽", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = color) }
     }
 }
