@@ -61,10 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fincoach.data.model.Category
-import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.BrightGreen
 import com.example.fincoach.ui.theme.DeepGreen
-import com.example.fincoach.ui.theme.TextDarkGray
+import com.example.fincoach.ui.theme.LocalAppColors
 import com.example.fincoach.ui.theme.TextGray
 import com.example.fincoach.ui.theme.White
 import com.example.fincoach.viewmodel.TransactionViewModel
@@ -124,6 +123,7 @@ fun AddTransactionScreen(
 
     LaunchedEffect(isIncome) { selectedCategory = null }
 
+    val c = LocalAppColors.current
     val buttonGradient = Brush.verticalGradient(listOf(BrightGreen, DeepGreen))
 
     Scaffold(
@@ -145,7 +145,7 @@ fun AddTransactionScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(BgLightGray)
+                    .background(c.bg)
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Button(
@@ -173,7 +173,7 @@ fun AddTransactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(BgLightGray)
+                .background(c.bg)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -181,13 +181,13 @@ fun AddTransactionScreen(
             // Тип операции
             Card(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = White)
+                colors = CardDefaults.cardColors(containerColor = c.cardBg)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
-                        .background(BgLightGray, RoundedCornerShape(16.dp))
+                        .background(c.bg, RoundedCornerShape(16.dp))
                 ) {
                     listOf(false to "Расход", true to "Доход").forEach { (income, label) ->
                         val selected = isIncome == income
@@ -196,14 +196,14 @@ fun AddTransactionScreen(
                                 .weight(1f)
                                 .height(40.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (selected) White else Color.Transparent)
+                                .background(if (selected) c.cardBg else Color.Transparent)
                                 .clickable { isIncome = income },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = label,
                                 fontWeight = FontWeight.Bold,
-                                color = if (selected) (if (income) Color(0xFF27AE60) else Color(0xFFE74C3C)) else TextGray
+                                color = if (selected) (if (income) DeepGreen else Color(0xFFE74C3C)) else TextGray
                             )
                         }
                     }
@@ -214,7 +214,7 @@ fun AddTransactionScreen(
             Card(
                 onClick = { showDatePicker = true },
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = White)
+                colors = CardDefaults.cardColors(containerColor = c.cardBg)
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -222,40 +222,44 @@ fun AddTransactionScreen(
                 ) {
                     Icon(Icons.Default.CalendarMonth, null, tint = DeepGreen)
                     Spacer(Modifier.width(12.dp))
-                    Text(dateLabel, fontWeight = FontWeight.Bold)
+                    Text(dateLabel, fontWeight = FontWeight.Bold, color = c.textPrimary)
                 }
             }
 
             // Поле суммы
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White)) {
+            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = c.cardBg)) {
                 TextField(
                     value = amountText,
-                    onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Сумма") },
-                    prefix = { Text("₽ ", fontWeight = FontWeight.Bold) },
+                    onValueChange = { amountText = it.filter { ch -> ch.isDigit() || ch == '.' } },
+                    label = { Text("Сумма", color = c.textSecondary) },
+                    prefix = { Text("₽ ", fontWeight = FontWeight.Bold, color = c.textPrimary) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = White,
-                        unfocusedContainerColor = White,
+                        focusedContainerColor = c.cardBg,
+                        unfocusedContainerColor = c.cardBg,
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = c.textPrimary,
+                        unfocusedTextColor = c.textPrimary
                     )
                 )
             }
 
             // Поле описания
-            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White)) {
+            Card(shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = c.cardBg)) {
                 TextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Описание") },
+                    label = { Text("Описание", color = c.textSecondary) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = White,
-                        unfocusedContainerColor = White,
+                        focusedContainerColor = c.cardBg,
+                        unfocusedContainerColor = c.cardBg,
                         focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
+                        unfocusedIndicatorColor = Color.Transparent,
+                        focusedTextColor = c.textPrimary,
+                        unfocusedTextColor = c.textPrimary
                     )
                 )
             }
@@ -270,13 +274,13 @@ fun AddTransactionScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) DeepGreen.copy(0.1f) else White)
+                                .background(if (isSelected) DeepGreen.copy(0.1f) else c.cardBg)
                                 .border(1.dp, if (isSelected) DeepGreen else Color.Transparent, RoundedCornerShape(12.dp))
                                 .clickable { selectedCategory = cat }
                                 .padding(12.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(cat.title, fontSize = 12.sp, color = if (isSelected) DeepGreen else TextDarkGray)
+                            Text(cat.title, fontSize = 12.sp, color = if (isSelected) DeepGreen else c.textPrimary)
                         }
                     }
                     if (row.size < 3) Spacer(Modifier.weight((3 - row.size).toFloat()))

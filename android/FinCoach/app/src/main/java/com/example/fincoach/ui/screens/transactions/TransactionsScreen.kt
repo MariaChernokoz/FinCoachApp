@@ -38,10 +38,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fincoach.data.model.Transaction
 import com.example.fincoach.ui.FinCoachTopBar
 import com.example.fincoach.ui.categoryEmoji
-import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.DeepGreen
-import com.example.fincoach.ui.theme.TextBlack
-import com.example.fincoach.ui.theme.TextDarkGray
+import com.example.fincoach.ui.theme.LocalAppColors
 import com.example.fincoach.ui.theme.TextGray
 import com.example.fincoach.ui.theme.White
 import com.example.fincoach.viewmodel.TransactionViewModel
@@ -59,24 +57,25 @@ fun TransactionsScreen(
     val recentTxs    by vm.recentTransactions.collectAsState()
 
     val limitedTxs = recentTxs.take(7)
+    val c = LocalAppColors.current
 
-    Column(modifier = Modifier.fillMaxSize().background(BgLightGray)) {
-        FinCoachTopBar(title = "Мои финансы", actionIcon = Icons.Default.Add, onActionClick = onNavigateToAdd)
+    Column(modifier = Modifier.fillMaxSize().background(c.bg)) {
+        FinCoachTopBar(title = "Мои финансы")
 
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = c.cardBg), elevation = CardDefaults.cardElevation(2.dp)) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text("Общий баланс", color = TextGray, fontSize = 13.sp)
                     Spacer(Modifier.height(4.dp))
                     Text(text = "${String.format("%,.2f", totalBalance)} ₽", fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, color = if (totalBalance >= 0) DeepGreen else Color(0xFFE74C3C))
                     Spacer(Modifier.height(16.dp))
-                    HorizontalDivider(color = BgLightGray)
+                    HorizontalDivider(color = c.divider)
                     Spacer(Modifier.height(12.dp))
                     Row(Modifier.fillMaxWidth()) {
-                        SummaryItem("Доходы", totalIncome, Color(0xFF27AE60), Modifier.weight(1f))
+                        SummaryItem("Доходы", totalIncome, DeepGreen, Modifier.weight(1f))
                         SummaryItem("Расходы", totalExpense, Color(0xFFE74C3C), Modifier.weight(1f))
                     }
                 }
@@ -93,12 +92,12 @@ fun TransactionsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Последние операции", color = TextDarkGray, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("Последние операции", color = c.textPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 Text("Все →", color = DeepGreen, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { onNavigateToHistory() })
             }
 
             if (limitedTxs.isEmpty()) {
-                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = White), elevation = CardDefaults.cardElevation(2.dp)) {
+                Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = c.cardBg), elevation = CardDefaults.cardElevation(2.dp)) {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("💸", fontSize = 32.sp); Spacer(Modifier.height(8.dp))
@@ -110,13 +109,13 @@ fun TransactionsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = White),
+                    colors = CardDefaults.cardColors(containerColor = c.cardBg),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
                     Column {
                         limitedTxs.forEachIndexed { index, tx ->
                             TransactionRow(tx)
-                            if (index < limitedTxs.lastIndex) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
+                            if (index < limitedTxs.lastIndex) HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = c.divider)
                         }
                     }
                 }
@@ -127,28 +126,30 @@ fun TransactionsScreen(
 
 @Composable
 private fun SummaryItem(label: String, amount: Double, color: Color, modifier: Modifier) {
+    val c = LocalAppColors.current
     Column(modifier = modifier) {
-        Text(label, color = TextGray, fontSize = 12.sp)
+        Text(label, color = c.textSecondary, fontSize = 12.sp)
         Text("${if (label == "Доходы") "+" else "−"} ${String.format("%,.2f", amount)} ₽", color = color, fontWeight = FontWeight.Bold, fontSize = 15.sp)
     }
 }
 
 @Composable
 private fun TransactionRow(tx: Transaction) {
+    val c = LocalAppColors.current
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(if (tx.isIncome) Color(0xFF27AE60).copy(0.12f) else Color(0xFFE74C3C).copy(0.12f)), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.size(44.dp).clip(CircleShape).background(if (tx.isIncome) DeepGreen.copy(0.12f) else Color(0xFFE74C3C).copy(0.12f)), contentAlignment = Alignment.Center) {
             Text(categoryEmoji(tx.categoryTitle, tx.isIncome), fontSize = 22.sp)
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(tx.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = TextBlack)
-            Text(tx.categoryTitle, color = TextGray, fontSize = 12.sp)
+            Text(tx.title.ifBlank { "Без названия" }, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = c.textPrimary)
+            Text(tx.categoryTitle, color = c.textSecondary, fontSize = 12.sp)
         }
 
         Text(
             text = "${if (tx.isIncome) "+" else "−"} ${String.format("%,.2f", tx.amount)} ₽",
             fontWeight = FontWeight.Bold,
-            color = TextBlack,
+            color = if (tx.isIncome) DeepGreen else c.textPrimary,
             fontSize = 14.sp
         )
     }

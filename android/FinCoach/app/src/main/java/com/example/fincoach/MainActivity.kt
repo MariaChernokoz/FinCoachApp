@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -56,6 +57,7 @@ fun FinCoachApp() {
     val c = LocalAppColors.current
     Scaffold(
         containerColor = c.bg,
+        contentWindowInsets = WindowInsets(0),
         bottomBar = {
             if (currentRoute in bottomBarRoutes) {
                 FinCoachBottomBar(

@@ -16,14 +16,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val isDarkTheme: StateFlow<Boolean> = appSettings.isDarkTheme
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    val language: StateFlow<String> = appSettings.language
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "ru")
-
     fun setDarkTheme(enabled: Boolean) {
         viewModelScope.launch { appSettings.setDarkTheme(enabled) }
-    }
-
-    fun setLanguage(lang: String) {
-        viewModelScope.launch { appSettings.setLanguage(lang) }
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -27,14 +28,16 @@ fun FinCoachTopBar(
     onNavigationClick: () -> Unit = {},
     actionIcon: ImageVector? = null,
     onActionClick: () -> Unit = {},
-    customAction: @Composable (() -> Unit)? = null
+    customAction: @Composable (() -> Unit)? = null,
+    verticalPadding: androidx.compose.ui.unit.Dp = 14.dp
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(DeepGreen)
             .statusBarsPadding()
-            .padding(horizontal = 4.dp, vertical = 2.dp),
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 4.dp, vertical = verticalPadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Кнопка назад / левая иконка

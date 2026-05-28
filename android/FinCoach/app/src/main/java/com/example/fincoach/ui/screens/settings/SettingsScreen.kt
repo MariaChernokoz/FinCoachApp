@@ -21,8 +21,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
@@ -31,6 +33,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,12 +53,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fincoach.ui.theme.BgLightGray
 import com.example.fincoach.ui.theme.DeepGreen
-import com.example.fincoach.ui.theme.TextDarkGray
+import com.example.fincoach.ui.theme.LocalAppColors
 import com.example.fincoach.ui.theme.TextGray
 import com.example.fincoach.ui.theme.White
 import com.example.fincoach.viewmodel.AuthViewModel
+import com.example.fincoach.viewmodel.SettingsViewModel
 
 @Composable
 fun SettingsScreen(
@@ -62,7 +66,10 @@ fun SettingsScreen(
     onLogout: () -> Unit
 ) {
     val authViewModel: AuthViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = viewModel()
+    val c = LocalAppColors.current
     val context = LocalContext.current
+    val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     val userEmail   = authViewModel.getCurrentUserEmail()
     val userName    = authViewModel.getCurrentUserName()
@@ -84,8 +91,8 @@ fun SettingsScreen(
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Выйти?") },
-            text  = { Text("Вы уверены, что хотите выйти из аккаунта?") },
+            title = { Text("Выйти из аккаунта?") },
+            text  = { Text("Вы уверены, что хотите выйти?") },
             confirmButton = {
                 TextButton(onClick = { authViewModel.logout(); onLogout() }) {
                     Text("Выйти", color = Color(0xFFFF5252))
@@ -103,8 +110,8 @@ fun SettingsScreen(
     if (showResetPasswordDialog) {
         AlertDialog(
             onDismissRequest = { showResetPasswordDialog = false },
-            title = { Text("Сброс пароля") },
-            text  = { Text("Мы отправим ссылку для создания нового пароля на вашу почту $userEmail. Продолжить?") },
+            title = { Text("Смена пароля") },
+            text  = { Text("На ваш email будет отправлена ссылка для сброса пароля.") },
             confirmButton = {
                 TextButton(onClick = {
                     showResetPasswordDialog = false
@@ -128,7 +135,7 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgLightGray)
+            .background(c.bg)
             .verticalScroll(rememberScrollState())
     ) {
         // Шапка
@@ -165,25 +172,57 @@ fun SettingsScreen(
         Spacer(Modifier.height(24.dp))
 
         // Данные аккаунта
-        SectionLabel("ДАННЫЕ АККАУНТА")
+        SectionLabel("АККАУНТ")
         SettingsCard {
             SettingsRow(Icons.Default.Person, "Имя пользователя", userName)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = c.divider)
             SettingsRow(Icons.Default.Email, "Email", userEmail)
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BgLightGray)
-
-            // Кликабельная строка для сброса пароля
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = c.divider)
             SettingsRowClickable(
                 icon = Icons.Default.LockReset,
                 label = "Безопасность",
-                value = "Сбросить текущий пароль",
-                onClick = {
-                    showResetPasswordDialog = true
-                }
+                value = "Сменить пароль",
+                onClick = { showResetPasswordDialog = true }
             )
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
+
+        // Внешний вид
+        SectionLabel("ВНЕШНИЙ ВИД")
+        SettingsCard {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(36.dp).background(DeepGreen.copy(0.1f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+                        contentDescription = null,
+                        tint = DeepGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Тёмная тема", color = c.textSecondary, fontSize = 12.sp)
+                    Text(
+                        if (isDarkTheme) "Включена" else "Выключена",
+                        color = c.textPrimary, fontWeight = FontWeight.Medium, fontSize = 15.sp
+                    )
+                }
+                Switch(
+                    checked = isDarkTheme,
+                    onCheckedChange = { settingsViewModel.setDarkTheme(it) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = DeepGreen, checkedTrackColor = DeepGreen.copy(0.4f))
+                )
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
 
         // Кнопка выхода
         Card(
@@ -192,7 +231,7 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp)
                 .clickable { showLogoutDialog = true },
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = White),
+            colors = CardDefaults.cardColors(containerColor = c.cardBg),
             elevation = CardDefaults.cardElevation(2.dp)
         ) {
             Row(
@@ -201,7 +240,7 @@ fun SettingsScreen(
             ) {
                 Icon(Icons.Default.ExitToApp, null, tint = Color(0xFFFF5252), modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(12.dp))
-                Text("Выйти из системы", color = Color(0xFFFF5252), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                Text("Выйти из аккаунта", color = Color(0xFFFF5252), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
             }
         }
 
@@ -213,9 +252,10 @@ fun SettingsScreen(
 
 @Composable
 private fun SectionLabel(text: String) {
+    val c = LocalAppColors.current
     Text(
         text = text,
-        color = TextGray,
+        color = c.textSecondary,
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(start = 28.dp, bottom = 8.dp)
@@ -224,10 +264,11 @@ private fun SectionLabel(text: String) {
 
 @Composable
 private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+    val c = LocalAppColors.current
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = c.cardBg),
         elevation = CardDefaults.cardElevation(2.dp),
         content = content
     )
@@ -235,20 +276,16 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 private fun SettingsRow(icon: ImageVector, label: String, value: String) {
+    val c = LocalAppColors.current
     Row(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.size(36.dp).background(DeepGreen.copy(0.1f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, null, tint = DeepGreen, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(16.dp))
-        Column {
-            Text(label, color = TextGray, fontSize = 12.sp)
-            Text(value, color = TextDarkGray, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+        Icon(icon, contentDescription = null, tint = DeepGreen, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, fontSize = 12.sp, color = c.textSecondary)
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.textPrimary)
         }
     }
 }
@@ -260,29 +297,18 @@ private fun SettingsRowClickable(
     value: String,
     onClick: () -> Unit
 ) {
+    val c = LocalAppColors.current
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.size(36.dp).background(DeepGreen.copy(0.1f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, null, tint = DeepGreen, modifier = Modifier.size(20.dp))
-        }
-        Spacer(Modifier.width(16.dp))
+        Icon(icon, contentDescription = null, tint = DeepGreen, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(label, color = TextGray, fontSize = 12.sp)
-            Text(value, color = TextDarkGray, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+            Text(label, fontSize = 12.sp, color = c.textSecondary)
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = DeepGreen)
         }
-        Icon(
-            Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = TextGray,
-            modifier = Modifier.size(20.dp)
-        )
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = c.textSecondary, modifier = Modifier.size(18.dp))
     }
 }
+

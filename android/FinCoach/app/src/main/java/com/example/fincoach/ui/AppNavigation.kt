@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.example.fincoach.ui.theme.DeepGreen
+import com.example.fincoach.ui.theme.LocalAppColors
 import com.example.fincoach.ui.theme.TextGray
 import com.example.fincoach.ui.theme.White
 
@@ -30,6 +31,7 @@ fun FinCoachBottomBar(
     activeTab: Int,
     onNavigate: (String) -> Unit
 ) {
+    val c = LocalAppColors.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -38,7 +40,7 @@ fun FinCoachBottomBar(
         Surface(
             modifier = Modifier.fillMaxWidth().height(64.dp),
             shape = RoundedCornerShape(36.dp),
-            color = White,
+            color = c.cardBg,
             shadowElevation = 8.dp
         ) {
             Row(
